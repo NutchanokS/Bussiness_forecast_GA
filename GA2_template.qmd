@@ -140,7 +140,7 @@ The ACF has large positive spikes across many lags and they remain above the sig
 
 *Would transforming your data be useful (no more than 50 words)? Choose a transformation and justify your choice (no more than 50 words). (5 marks)*
 
-Guerrero’s method estimated λ = 0.403, so I compared the original series with Box-Cox transformations using λ = 0.403 and λ = 0.5; since the two transformed series looked very similar and λ = 0.5 is equivalent to a scaled and shifted square-root transformation, I use λ = 0.5 for easier interpretation.
+Since the estimated Box-Cox lambda is 0.403, a log transformation is not the best choice. A Box-Cox transformation with λ = 0.403 would be most suitable. A square root transformation could also be used as a simple approximation because 0.403 is close to 0.5.
 
 ```{r}
 lambda_tbl <- print_retail_act %>%
@@ -312,7 +312,7 @@ cv_accuracy <- retail_act_cv %>%
   model(
     Naive = NAIVE(y),
     STL_Drift = decomposition_model(
-      STL(box_cox(y, lambda)),
+      STL(box_cox(y, 0.403)),
       RW(season_adjust ~ drift())
     )
   ) %>%
@@ -320,16 +320,17 @@ cv_accuracy <- retail_act_cv %>%
   accuracy(print_retail_act)
 
 
-cv_accuracy %>%
-  select(.model, RMSE, MAE, MAPE, MASE) %>%
-  arrange(RMSE)
+cv_accuracy |>
+  select(.model, RMSE, MAE, MAPE, MASE) |>
+  arrange(RMSE) |>
+  kable(caption = "Time Series Cross-Validation Accuracy Comparison")
 ```
 
-**Comparison with Test Set: **
+**Comparison with Test Set:**
 
 There is a conflict between our metrics: Naive performed better on the specific test set, but STL_Drift showed much higher accuracy during TSCV (RMSE 0.752 vs 1.725). This suggests that while STL struggled with the recent extreme decline in the test set, it is actually the more reliable and accurate model when averaged over the long-term history.
 
-**Advantages/Disadvantages: **
+**Advantages/Disadvantages:**
 - Advantages:
 
 TSCV is more reliable because it tests the model many times across history, not just once. It proves that STL is generally better, even if it failed the recent "test set." 
