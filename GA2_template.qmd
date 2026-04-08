@@ -17,6 +17,10 @@ format:
 knitr::opts_chunk$set(echo = TRUE, eval=TRUE, error=TRUE, cache=FALSE)
 library(fpp3)
 library(readr)
+library(dplyr)
+library(ggplot2)
+library(patchwork)
+library(knitr)
 ```
 
 ```{r}
@@ -136,26 +140,47 @@ The ACF has large positive spikes across many lags and they remain above the sig
 
 *Would transforming your data be useful (no more than 50 words)? Choose a transformation and justify your choice (no more than 50 words). (5 marks)*
 
-```{r original}
+```{r}
+lambda_tbl <- print_retail_act %>%
+  features(y, guerrero)
 
-print_retail_act %>% autoplot(y) +
-  labs(x = "Month",
-       y = "Turnover (million $AUD)", 
-       title = "Original series")
+lambda_tbl %>%
+  mutate(lambda_guerrero = round(lambda_guerrero, 4)) %>%
+  rename(`Guerrero lambda` = lambda_guerrero) %>%
+  kable(caption = "Estimated transformation parameter from Guerrero's method")
 ```
-
-From the original plot, a transformation seems useful because the variation gets larger when the level is higher. This suggests the variance is not constant, so it makes sense to compare log and Box-Cox transformations and choose the one that stabilises the variation best.
-
-**Transformation Comparison**
 
 ```{r log transformation}
 
-# Log plot
-print_retail_act %>% autoplot(log(y)) +
-  labs(x = "Month",
-       y = "log(Turnover)",
-       title = "Log-transformed series")
+p1 <- print_retail_act %>%
+  autoplot(y) +
+  labs(
+    title = "Original series",
+    x = "Month",
+    y = "Turnover ($ Millions)")
+
+p2 <- print_retail_act %>%
+  autoplot(box_cox(y, 0.403)) +
+  labs(
+    title = expression("Box-Cox transformed series (" * lambda == 0.403 * ")"),
+    x = "Month",
+    y = "Box-Cox(Turnover)")
+
+p3 <- print_retail_act %>%
+  autoplot(box_cox(y, 0.5)) +
+  labs(
+    title = "Square root transformed series",
+    x = "Month",
+    y = "Box-Cox(Turnover)")
+
+(p1 / p2 / p3) +
+  plot_annotation(
+    title = "Comparison of the original series and Box-Cox transformed series",
+    theme = theme(
+      plot.title = element_text(hjust = 0.5, face = "bold", size = 16)))
 ```
+
+Guerrero’s method estimated λ = 0.403, so I compared the original series with Box-Cox transformations using λ = 0.403 and λ = 0.5; since the two transformed series looked very similar and λ = 0.5 is equivalent to a scaled and shifted square-root transformation, I use λ = 0.5 for easier interpretation.
 
 ```{r Box-Cox transformation}
 
