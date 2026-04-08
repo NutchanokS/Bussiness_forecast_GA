@@ -323,9 +323,9 @@ cv_accuracy <- cv_fc %>%
   select(.model, RMSE, MAE, MAPE) %>%
   group_by(.model) %>%
   summarise(
-    RMSE = mean(RMSE, na.rm = TRUE),
-    MAE = mean(MAE, na.rm = TRUE),
-    MAPE = mean(MAPE, na.rm = TRUE)) %>%
+    RMSE = mean(RMSE),
+    MAE = mean(MAE),
+    MAPE = mean(MAPE)) %>%
   mutate(across(where(is.numeric), round, 3)) %>%
   arrange(RMSE)
 
