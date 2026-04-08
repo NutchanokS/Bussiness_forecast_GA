@@ -242,9 +242,10 @@ forecasts |>
 ```{r}
 #| label: tbl-q3-accuracy
 
-forecasts |>
-  accuracy(test_print_retail_act) |>
-  mutate(across(where(is.numeric), round, 3)) |>
+forecasts %>%
+  accuracy(test_print_retail_act) %>%
+  select(.model, ME, RMSE, MAE, MPE, MAPE, ACF1) %>%
+  mutate(across(where(is.numeric), round, 3)) %>%
   kable(caption = "Forecast accuracy on the test set")
 ```
 
@@ -295,6 +296,8 @@ acc_q4 <- fc_q4 |>
   mutate(across(where(is.numeric), round, 3))
 
 acc_q4 |>
+  select(.model, ME, RMSE, MAE, MPE, MAPE, ACF1) %>%
+  mutate(across(where(is.numeric), round, 3)) %>%
   kable(caption = "Forecast accuracy of decomposition methods on the test set")
 ```
 
@@ -320,6 +323,8 @@ cv_accuracy <- retail_act_cv %>%
   accuracy(print_retail_act)
 
 cv_accuracy %>%
+  select(.model, RMSE, MAPE, MASE, RMSSE) %>%
+  mutate(across(where(is.numeric), round, 3)) %>%
   kable(caption = "Time series cross-validation accuracy comparison")
 ```
 
