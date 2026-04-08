@@ -263,10 +263,10 @@ I tried decomposition methods with STL + Naive and STL + Drift. STL + Naive was 
 fit_q4 <- train_print_retail_act |>
   model(
     STL_naive = decomposition_model(
-      STL(box_cox(y, 0.403) ~ season(window = "periodic")),
+      STL(box_cox(y, 0.5) ~ season(window = "periodic")),
       NAIVE(season_adjust)),
     STL_drift = decomposition_model(
-      STL(box_cox(y, 0.403) ~ season(window = "periodic")),
+      STL(box_cox(y, 0.5) ~ season(window = "periodic")),
       RW(season_adjust ~ drift())))
 
 fc_q4 <- fit_q4 |>
@@ -304,10 +304,10 @@ acc_q4 |>
 *Use time series cross-validation to select the best of the methods you have so far considered (you may only consider the most appropriate of the four benchmarks). Tabulate your results. How do these compare with the test set? Comment on the advantages and/or disadvantages of using this method (no more than 100 words). (10 marks)*
 
 ```{r}
-retail_act_cv <- train_print_retail_act %>%
-  stretch_tsibble(.init = 120, .step = 1)
+retail_act_cv <- print_retail_act %>%
+  stretch_tsibble(.init = 60, .step = 1)
 
-cv_fc <- retail_act_cv %>%
+cv_accuracy <- retail_act_cv %>%
   model(
     Naive = NAIVE(y),
     STL_Naive = decomposition_model(
@@ -316,29 +316,18 @@ cv_fc <- retail_act_cv %>%
     STL_Drift = decomposition_model(
       STL(box_cox(y, 0.403) ~ season(window = "periodic")),
       RW(season_adjust ~ drift()))) %>%
-  forecast(h = 24)
-
-cv_accuracy <- cv_fc %>%
-  accuracy(train_print_retail_act) %>%
-  select(.model, RMSE, MAE, MAPE) %>%
-  group_by(.model) %>%
-  summarise(
-    RMSE = mean(RMSE),
-    MAE = mean(MAE),
-    MAPE = mean(MAPE)) %>%
-  mutate(across(where(is.numeric), round, 3)) %>%
-  arrange(RMSE)
+  forecast(h = 1) %>%
+  accuracy(print_retail_act)
 
 cv_accuracy %>%
   kable(caption = "Time series cross-validation accuracy comparison")
 ```
 
-**Comparison with Test Set:** 
+**Comparison with Test Set:**
 
 TSCV results identify STL_Naive as the most stable model historically, contradicting the test set where the simple Naive method performed better. This suggests that while Naive excelled during the recent extreme industry downturn, it is less reliable overall. STL-based methods are more robust across various historical periods.
 
-**Advantages/Disadvantages:** 
-
+**Advantages/Disadvantages:**
 - Advantages:
 
 TSCV provides a more reliable performance estimate by averaging errors over multiple time windows, reducing the impact of anomalies in a single test set
