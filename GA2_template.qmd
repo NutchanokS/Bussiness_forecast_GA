@@ -328,13 +328,7 @@ cv_accuracy %>%
   kable(caption = "Time series cross-validation accuracy comparison")
 ```
 
-**Comparison with Test Set**
-
-The cross-validation results were different from the test set results. The test set selected Naive as the best method, but cross-validation favoured STL_Naive. This suggests that STL_Naive performed better on average across the whole series, while Naive worked better over the final two-year period.
-
-**Advantages/Disadvantages**
-
-An advantage of time series cross-validation is that it uses many rolling forecast origins, so it provides a broader and less split-dependent assessment than a single test set. However, it is more computationally expensive, and the results may differ from the final test set because they average performance over many periods rather than focusing only on the most recent observations.
+Time series cross-validation selected STL_Naive as the best method. The cross-validation results differed from the test set results that the test set selected Naive, while cross-validation favoured STL_Naive. This suggests that STL_Naive performed better on average across the whole series, but Naive worked better in the final two years. **We therefore prefer STL_Naive**, as cross-validation provides a broader assessment of forecast performance. Its main advantage is using many rolling forecast origins rather than one split. However, it is more computationally expensive and may reflect the most recent period less closely than a single test set.
 
 \newpage
 ## Question 6
