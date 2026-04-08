@@ -136,9 +136,43 @@ The ACF has large positive spikes across many lags and they remain above the sig
 
 *Would transforming your data be useful (no more than 50 words)? Choose a transformation and justify your choice (no more than 50 words). (5 marks)*
 
-```{r}
+```{r original}
 
+print_retail_act %>% autoplot(y) +
+  labs(x = "Month",
+       y = "Turnover (million $AUD)", 
+       title = "Original series")
 ```
+
+From the original plot, a transformation seems useful because the variation gets larger when the level is higher. This suggests the variance is not constant, so it makes sense to compare log and Box-Cox transformations and choose the one that stabilises the variation best.
+
+**Transformation Comparison**
+
+```{r log transformation}
+
+# Log plot
+print_retail_act %>% autoplot(log(y)) +
+  labs(x = "Month",
+       y = "log(Turnover)",
+       title = "Log-transformed series")
+```
+
+```{r Box-Cox transformation}
+
+# Guerrero’s method to estimate an appropriate lambda for the Box-Cox transformation.
+lambda <- print_retail_act %>%
+  features(y, features = guerrero) %>%
+  pull(lambda_guerrero)
+
+# Box-Cox plot
+print_retail_act%>% autoplot(box_cox(y, lambda)) +
+  labs(x = "Month",
+       y = "Box-Cox transformed turnover",
+       title = paste("Box-Cox transformed series (lambda =", round(lambda, 3), ")")
+       )
+```
+
+
 
 \newpage
 ## Question 3
