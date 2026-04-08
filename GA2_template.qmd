@@ -255,8 +255,47 @@ Based on the accuracy table, Naive is the most appropriate benchmark because it 
 
 *Can you construct better forecasting method(s) for your data? Give a brief description of these. Evaluate the method(s) over the test set and compare them to the benchmarks  (no more than 50 words each). This question requires you to think about and only use tools you have acquired so far in this unit. Only materials from up to and including Chapter 5 (not Chapter 8) can be used. (Notice that more weight is now placed on this part of the assignment) (14 marks)*
 
-```{r}
+I tried decomposition methods with STL + Naive and STL + Drift. STL + Naive was slightly better, but both had higher forecasr errors than the Naive benchmark from Question 3. Therefore, decomposition was not an improvement, and Naive remains the preferred forecasting method for this series.
 
+```{r}
+#| label: fit-q4-methods
+
+fit_q4 <- train_print_retail_pct |>
+  model(
+    STL_naive = decomposition_model(
+      STL(box_cox(y, 0.5) ~ season(window = "periodic")),
+      NAIVE(season_adjust)),
+    STL_drift = decomposition_model(
+      STL(box_cox(y, 0.5) ~ season(window = "periodic")),
+      RW(season_adjust ~ drift())))
+
+fc_q4 <- fit_q4 |>
+  forecast(h = "24 months")
+```
+
+```{r}
+#| label: fig-q4-forecast
+
+fc_q4 |>
+  autoplot(train_print_retail_pct, level = NULL) +
+  autolayer(test_print_retail_pct, y, colour = "grey50") +
+  labs(
+    title = "Forecasts from Decomposition Methods",
+    x = "Month",
+    y = "Turnover (Millions of Dollars)",
+    colour = "Method") +
+  theme_minimal()
+```
+
+```{r}
+#| label: tbl-q4-accuracy
+
+acc_q4 <- fc_q4 |>
+  accuracy(test_print_retail_pct) |>
+  mutate(across(where(is.numeric), round, 3))
+
+acc_q4 |>
+  kable(caption = "Forecast accuracy of decomposition methods on the test set")
 ```
 
 \newpage
