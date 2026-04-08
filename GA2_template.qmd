@@ -344,8 +344,23 @@ It is computationally expensive as models are re-fitted repeatedly. Additionally
 *For the best method, do a residual analysis. Comment on these (no more than 150 words). (4 marks)*
 
 ```{r}
+best_fit <- train_print_retail_act %>%
+  model(
+    STL_Naive = decomposition_model(
+      STL(box_cox(y, 0.403) ~ season(window = "periodic")),
+      NAIVE(season_adjust)
+    )
+  )
 
+best_fit |> gg_tsresiduals()
 ```
+
+```{r}
+augment(best_fit) %>%
+  features(.innov, ljung_box, lag = 24)
+```
+
+The residuals are mostly centred around zero and the variance is fairly stable, although there are some large spikes. The histogram is roughly bell-shaped. The ACF shows several spikes beyond the significance limits, indicating that some autocorrelation remains in the residuals. This suggests the model has not fully captured all of the dependence in the series. The Ljung–Box test gives a very small p-value, confirming that the residuals are not white noise. Overall, the method works reasonably well, but some dependence remains unexplained.
 
 \newpage
 ## Question 7
