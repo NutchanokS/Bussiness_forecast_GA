@@ -140,6 +140,8 @@ The ACF has large positive spikes across many lags and they remain above the sig
 
 *Would transforming your data be useful (no more than 50 words)? Choose a transformation and justify your choice (no more than 50 words). (5 marks)*
 
+Guerrero’s method estimated λ = 0.403, so I compared the original series with Box-Cox transformations using λ = 0.403 and λ = 0.5; since the two transformed series looked very similar and λ = 0.5 is equivalent to a scaled and shifted square-root transformation, I use λ = 0.5 for easier interpretation.
+
 ```{r}
 lambda_tbl <- print_retail_act %>%
   features(y, guerrero)
@@ -151,6 +153,8 @@ lambda_tbl %>%
 ```
 
 ```{r log transformation}
+#| fig-height: 12
+#| fig-width: 10
 
 p1 <- print_retail_act %>%
   autoplot(y) +
@@ -179,25 +183,6 @@ p3 <- print_retail_act %>%
     theme = theme(
       plot.title = element_text(hjust = 0.5, face = "bold", size = 16)))
 ```
-
-Guerrero’s method estimated λ = 0.403, so I compared the original series with Box-Cox transformations using λ = 0.403 and λ = 0.5; since the two transformed series looked very similar and λ = 0.5 is equivalent to a scaled and shifted square-root transformation, I use λ = 0.5 for easier interpretation.
-
-```{r Box-Cox transformation}
-
-# Guerrero’s method to estimate an appropriate lambda for the Box-Cox transformation.
-lambda <- print_retail_act %>%
-  features(y, features = guerrero) %>%
-  pull(lambda_guerrero)
-
-# Box-Cox plot
-print_retail_act%>% autoplot(box_cox(y, lambda)) +
-  labs(x = "Month",
-       y = "Box-Cox transformed turnover",
-       title = paste("Box-Cox transformed series (lambda =", round(lambda, 3), ")")
-       )
-```
-
-
 
 \newpage
 ## Question 3
