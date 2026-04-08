@@ -304,7 +304,7 @@ acc_q4 |>
 *Use time series cross-validation to select the best of the methods you have so far considered (you may only consider the most appropriate of the four benchmarks). Tabulate your results. How do these compare with the test set? Comment on the advantages and/or disadvantages of using this method (no more than 100 words). (10 marks)*
 
 ```{r}
-retail_act_cv <- train_print_retail_pct %>%
+retail_act_cv <- train_print_retail_act %>%
   stretch_tsibble(.init = 120, .step = 1)
 
 cv_fc <- retail_act_cv %>%
@@ -319,7 +319,7 @@ cv_fc <- retail_act_cv %>%
   forecast(h = 24)
 
 cv_accuracy <- cv_fc %>%
-  accuracy(train_print_retail_pct) %>%
+  accuracy(train_print_retail_act) %>%
   select(.model, RMSE, MAE, MAPE) %>%
   group_by(.model) %>%
   summarise(
