@@ -373,8 +373,27 @@ The residuals are mostly centred around zero and the variance is fairly stable, 
 *Generate point forecasts for the next 2 years (future) from the method you have classified as best and plot them. Compare these visually and comment on the point and prediction intervals (no more than 100 words). (6 marks)*
 
 ```{r}
+#| label: fig-q7-forecasts
 
+best_fit <- train_print_retail_act |>
+  model(
+    STL_Naive = decomposition_model(
+      STL(box_cox(y, 0.403) ~ season(window = "periodic")),
+      NAIVE(season_adjust)))
+
+best_fit |> 
+  forecast(h = "24 months") |>
+  autoplot(train_print_retail_act) +
+  labs(
+    title = "24-Month Forecasts from STL_Naive",
+    subtitle = "Newspaper and book retailing, Australian Capital Territory",
+    x = "Month",
+    y = "Turnover (Millions of Dollars)"
+  ) +
+  theme_minimal()
 ```
+
+The forecasts look reasonable, as they retain the strong seasonal pattern in the series, with peaks still occurring near the end of each year. The point forecasts suggest continued seasonal fluctuations with a slight upward movement from the final observations. The prediction intervals widen as the forecast horizon increases, indicating greater uncertainty about future values. Overall, the model captures the seasonality well, but the wide prediction intervals suggest considerable uncertainty in longer-term forecasts.
 
 \newpage
 ## Question 8
