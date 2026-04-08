@@ -364,12 +364,6 @@ The residuals are mostly centred around zero and the variance is fairly stable, 
 ```{r}
 #| label: fig-q7-forecasts
 
-best_fit <- train_print_retail_act |>
-  model(
-    STL_Naive = decomposition_model(
-      STL(box_cox(y, 0.403) ~ season(window = "periodic")),
-      NAIVE(season_adjust)))
-
 best_fit |> 
   forecast(h = "24 months") |>
   autoplot(train_print_retail_act) +
@@ -389,6 +383,23 @@ The forecasts look reasonable, as they retain the strong seasonal pattern in the
 
 *Suppose that your group was a forecasting consulting group and you were working for a client. Give your group a name (add that to the subtitle above). Report your work here summarising and critically (think about assumption, limitations, extensions) evaluating the forecasts you are generating (no more than 200 words). (5 marks)*
 
-```{r}
+Prepared by GenieUS, we forecast the next 24 months of turnover for newspaper and book retailing in the Australian Capital Territory using STL decomposition with naive forecasts applied to the seasonally adjusted series. This model was selected because it provided the most stable performance in time series cross-validation and captured the strong seasonal pattern in the data. 
 
+```{r}
+#| echo: false
+
+best_fit |> 
+  forecast(h = "24 months") |>
+  autoplot(train_print_retail_act) +
+  labs(
+    title = "24-Month Forecasts from STL_Naive",
+    subtitle = "Newspaper and book retailing, Australian Capital Territory",
+    x = "Month",
+    y = "Turnover (Millions of Dollars)"
+  ) +
+  theme_minimal()
 ```
+
+The forecasts suggest that turnover is likely to remain at a relatively low level, with regular seasonal fluctuations continuing over the next 24 months. Prediction intervals widen over the forecast horizon, indicating increasing uncertainty in future values.
+
+A key limitation is that the model does not capture all dependence in the series, and recent structural changes in the industry may reduce forecast reliability.  These forecasts also rely on the assumption that historical seasonal patterns will persist and that no major external shocks will occur. Future work could compare this approach with regression-based models or other methods that better handle structural change.
