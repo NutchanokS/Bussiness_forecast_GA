@@ -335,17 +335,16 @@ cv_accuracy %>%
 
 **Comparison with Test Set:**
 
-There is a conflict between our metrics: Naive performed better on the specific test set, but STL_Drift showed much higher accuracy during TSCV (RMSE 0.752 vs 1.725). This suggests that while STL struggled with the recent extreme decline in the test set, it is actually the more reliable and accurate model when averaged over the long-term history.
+TSCV results identify STL_Naive as the most stable model historically, contradicting the test set where the simple Naive method performed better. This suggests that while Naive excelled during the recent extreme industry downturn, it is less reliable overall. STL-based methods are more robust across various historical periods.
 
 **Advantages/Disadvantages:**
 - Advantages:
 
-TSCV is more reliable because it tests the model many times across history, not just once. It proves that STL is generally better, even if it failed the recent "test set." 
+TSCV provides a more reliable performance estimate by averaging errors over multiple time windows, reducing the impact of anomalies in a single test set
 
 - Disadvantages: 
 
-It is slow to run because the model is recalculated many times. Also, the early results may be less accurate because the training data is too small at the beginning.
-
+It is computationally expensive as models are re-fitted repeatedly. Additionally, early training windows with limited data may yield less accurate estimates of complex seasonal components.
 
 
 
