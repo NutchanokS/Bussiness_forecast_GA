@@ -248,7 +248,7 @@ forecasts |>
   kable(caption = "Forecast accuracy on the test set")
 ```
 
-Based on the accuracy table, Naive is the most appropriate benchmark because it has the lowest RMSE and MAPE on the test set. Drift performs similarly, since the series shows no clear overall trend and its forecasts are therefore close to the last observed value, but naive is slightly more accurate. Although both naive and drift do not capture the seasonal pattern as well as seasonal naive, seasonal naive produces much larger forecast errors on the test set. **Therefore, naive is the best benchmark for this series.**
+Based on the accuracy table, Naive is the most appropriate benchmark because it has the lowest RMSE, MAE and MAPE on the test set. Drift performs similarly, since the series shows no clear overall trend and its forecasts are therefore close to the last observed value, but naive is slightly more accurate. Although both naive and drift do not capture the seasonal pattern as well as seasonal naive, seasonal naive produces much larger forecast errors on the test set. **Therefore, naive is the best benchmark for this series.**
 
 \newpage
 ## Question 4
