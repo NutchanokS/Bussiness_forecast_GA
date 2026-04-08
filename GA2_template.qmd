@@ -311,10 +311,10 @@ cv_fc <- retail_act_cv %>%
   model(
     Naive = NAIVE(y),
     STL_Naive = decomposition_model(
-      STL(box_cox(y, 0.5) ~ season(window = "periodic")),
+      STL(box_cox(y, 0.403) ~ season(window = "periodic")),
       NAIVE(season_adjust)),
     STL_Drift = decomposition_model(
-      STL(box_cox(y, 0.5) ~ season(window = "periodic")),
+      STL(box_cox(y, 0.403) ~ season(window = "periodic")),
       RW(season_adjust ~ drift()))) %>%
   forecast(h = 24)
 
