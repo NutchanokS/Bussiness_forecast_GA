@@ -255,7 +255,7 @@ Based on the accuracy table, Naive is the most appropriate benchmark because it 
 
 *Can you construct better forecasting method(s) for your data? Give a brief description of these. Evaluate the method(s) over the test set and compare them to the benchmarks  (no more than 50 words each). This question requires you to think about and only use tools you have acquired so far in this unit. Only materials from up to and including Chapter 5 (not Chapter 8) can be used. (Notice that more weight is now placed on this part of the assignment) (14 marks)*
 
-I tried decomposition methods with STL + Naive and STL + Drift. STL + Naive was slightly better, but both had higher forecasr errors than the Naive benchmark from Question 3. Therefore, decomposition was not an improvement, and Naive remains the preferred forecasting method for this series.
+I tried decomposition methods with STL + Naive and STL + Drift. STL + Naive was slightly better, but both had higher forecast errors than the Naive benchmark from Question 3. Therefore, decomposition was not an improvement, and Naive remains the preferred forecasting method for this series.
 
 ```{r}
 #| label: fit-q4-methods
@@ -263,10 +263,10 @@ I tried decomposition methods with STL + Naive and STL + Drift. STL + Naive was 
 fit_q4 <- train_print_retail_act |>
   model(
     STL_naive = decomposition_model(
-      STL(box_cox(y, 0.5) ~ season(window = "periodic")),
+      STL(box_cox(y, 0.403) ~ season(window = "periodic")),
       NAIVE(season_adjust)),
     STL_drift = decomposition_model(
-      STL(box_cox(y, 0.5) ~ season(window = "periodic")),
+      STL(box_cox(y, 0.403) ~ season(window = "periodic")),
       RW(season_adjust ~ drift())))
 
 fc_q4 <- fit_q4 |>
@@ -333,11 +333,12 @@ cv_accuracy %>%
   kable(caption = "Time series cross-validation accuracy comparison")
 ```
 
-**Comparison with Test Set:**
+**Comparison with Test Set:** 
 
 TSCV results identify STL_Naive as the most stable model historically, contradicting the test set where the simple Naive method performed better. This suggests that while Naive excelled during the recent extreme industry downturn, it is less reliable overall. STL-based methods are more robust across various historical periods.
 
-**Advantages/Disadvantages:**
+**Advantages/Disadvantages:** 
+
 - Advantages:
 
 TSCV provides a more reliable performance estimate by averaging errors over multiple time windows, reducing the impact of anomalies in a single test set
