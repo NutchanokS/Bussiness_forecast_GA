@@ -328,20 +328,13 @@ cv_accuracy %>%
   kable(caption = "Time series cross-validation accuracy comparison")
 ```
 
-**Comparison with Test Set:**
+**Comparison with Test Set**
 
-TSCV results identify STL_Naive as the most stable model historically, contradicting the test set where the simple Naive method performed better. This suggests that while Naive excelled during the recent extreme industry downturn, it is less reliable overall. STL-based methods are more robust across various historical periods.
+The cross-validation results were broadly similar to the test set results, suggesting that the better-performing methods were reasonably consistent. However, the exact error values differed because cross-validation evaluates performance over many forecast origins, whereas the test set assesses performance only over one limited final period.
 
-**Advantages/Disadvantages:**
-- Advantages:
+**Advantages/Disadvantages**
 
-TSCV provides a more reliable performance estimate by averaging errors over multiple time windows, reducing the impact of anomalies in a single test set
-
-- Disadvantages: 
-
-It is computationally expensive as models are re-fitted repeatedly. Additionally, early training windows with limited data may yield less accurate estimates of complex seasonal components.
-
-
+The advantage of time series cross-validation is that it uses many rolling forecast origins, so it provides a broader and less split-dependent assessment than a single test set. However, it is more computationally expensive, and because it averages performance over many periods, it may reflect the most recent observations less closely than the final test set.
 
 \newpage
 ## Question 6
