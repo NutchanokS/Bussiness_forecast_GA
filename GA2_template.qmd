@@ -342,6 +342,8 @@ The advantage of time series cross-validation is that it uses many rolling forec
 *For the best method, do a residual analysis. Comment on these (no more than 150 words). (4 marks)*
 
 ```{r}
+#| label: fig-q6-residuals
+
 best_fit <- train_print_retail_act %>%
   model(
     STL_Naive = decomposition_model(
