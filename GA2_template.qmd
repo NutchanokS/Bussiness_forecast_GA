@@ -305,7 +305,39 @@ acc_q4 |>
 
 ```{r}
 
+retail_act_cv <- print_retail_act %>%
+  stretch_tsibble(.init = 60, .step = 1)
+
+cv_accuracy <- retail_act_cv %>%
+  model(
+    Naive = NAIVE(y),
+    STL_Drift = decomposition_model(
+      STL(box_cox(y, lambda)),
+      RW(season_adjust ~ drift())
+    )
+  ) %>%
+  forecast(h = 1) %>%
+  accuracy(print_retail_act)
+
+
+cv_accuracy %>%
+  select(.model, RMSE, MAE, MAPE, MASE) %>%
+  arrange(RMSE)
 ```
+
+**Comparison with Test Set: **
+
+There is a conflict between our metrics: Naive performed better on the specific test set, but STL_Drift showed much higher accuracy during TSCV (RMSE 0.752 vs 1.725). This suggests that while STL struggled with the recent extreme decline in the test set, it is actually the more reliable and accurate model when averaged over the long-term history.
+
+**Advantages/Disadvantages: **
+- Advantages:
+
+TSCV is more reliable because it tests the model many times across history, not just once. It proves that STL is generally better, even if it failed the recent "test set." 
+
+- Disadvantages: 
+
+It is slow to run because the model is recalculated many times. Also, the early results may be less accurate because the training data is too small at the beginning.
+
 
 \newpage
 ## Question 6
