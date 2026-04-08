@@ -129,8 +129,7 @@ print_retail_act  %>%
   autoplot()
 ```
 
-The ACF has large positive spikes across many lags and they remain above the significance limits. This shows the series is not white noise and that there is still strong dependence over time.
-
+The ACF has large positive spikes across many lags and they remain above the significance limits. This shows the series is not white noise and that there is still strong dependence over time. There are also clear spikes at lags 12, 24, 36, and 48, which suggests a strong seasonal pattern with a period of 12. This indicates that observations are correlated with values from the same season in previous years.
 
 \newpage
 ## Question 2
