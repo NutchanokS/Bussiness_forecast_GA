@@ -193,15 +193,15 @@ p3 <- print_retail_act %>%
 #| label: fig-q3-datasplit
 #| fig-cap: "Train-test split of the series, with the test set in purple."
 
-train_print_retail_pct <- print_retail_act |> 
+train_print_retail_act <- print_retail_act |> 
   slice(1:(n() - 24))
 
-test_print_retail_pct  <- print_retail_act |> 
+test_print_retail_act  <- print_retail_act |> 
   slice((n() - 23):n())
 
-train_print_retail_pct |>
+train_print_retail_act |>
   autoplot(y) +
-  autolayer(test_print_retail_pct, y, colour = "purple") +
+  autolayer(test_print_retail_act, y, colour = "purple") +
   labs(
     title = "Train-Test Split of Turnover",
     subtitle = "Newspaper and book retailing, Australian Capital Territory",
@@ -215,7 +215,7 @@ train_print_retail_pct |>
 #| label: fig-q3-benchmarks
 #| fig-cap: "Forecasts from the four benchmark methods on the test set."
 
-fit <- train_print_retail_pct |>
+fit <- train_print_retail_act |>
   model(
     mean   = MEAN(y),
     naive  = NAIVE(y),
@@ -227,8 +227,8 @@ forecasts <- fit |>
   forecast(h = "24 months")
 
 forecasts |>
-  autoplot(train_print_retail_pct, level = NULL) +
-  autolayer(test_print_retail_pct, y, colour = "grey50") +
+  autoplot(train_print_retail_act, level = NULL) +
+  autolayer(test_print_retail_act, y, colour = "grey50") +
   labs(
     title = "Forecasts from Benchmark Methods",
     subtitle = "Newspaper and book retailing, Australian Capital Territory",
@@ -243,7 +243,7 @@ forecasts |>
 #| label: tbl-q3-accuracy
 
 forecasts |>
-  accuracy(test_print_retail_pct) |>
+  accuracy(test_print_retail_act) |>
   mutate(across(where(is.numeric), round, 3)) |>
   kable(caption = "Forecast accuracy on the test set")
 ```
@@ -260,7 +260,7 @@ I tried decomposition methods with STL + Naive and STL + Drift. STL + Naive was 
 ```{r}
 #| label: fit-q4-methods
 
-fit_q4 <- train_print_retail_pct |>
+fit_q4 <- train_print_retail_act |>
   model(
     STL_naive = decomposition_model(
       STL(box_cox(y, 0.5) ~ season(window = "periodic")),
@@ -277,8 +277,8 @@ fc_q4 <- fit_q4 |>
 #| label: fig-q4-forecast
 
 fc_q4 |>
-  autoplot(train_print_retail_pct, level = NULL) +
-  autolayer(test_print_retail_pct, y, colour = "grey50") +
+  autoplot(train_print_retail_act, level = NULL) +
+  autolayer(test_print_retail_act, y, colour = "grey50") +
   labs(
     title = "Forecasts from Decomposition Methods",
     x = "Month",
@@ -291,7 +291,7 @@ fc_q4 |>
 #| label: tbl-q4-accuracy
 
 acc_q4 <- fc_q4 |>
-  accuracy(test_print_retail_pct) |>
+  accuracy(test_print_retail_act) |>
   mutate(across(where(is.numeric), round, 3))
 
 acc_q4 |>
