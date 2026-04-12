@@ -22,6 +22,7 @@ library(dplyr)
 library(ggplot2)
 library(patchwork)
 library(knitr)
+library(kableExtra)
 ```
 
 ```{r}
@@ -75,7 +76,8 @@ This series records monthly newspaper and book retail turnover in Australian Cap
 #| label: fig-q1-timeplot
 #| fig-cap: "Time plot of monthly newspaper and book retail turnover in ACT (1982-2023)."
 
-print_retail_act %>% autoplot(y) +
+print_retail_act %>% 
+  autoplot(y) +
   labs(x = "Month",
        y = "Turnover (million $AUD)", 
        title = "Newspaper and book retailing",
@@ -88,7 +90,8 @@ As shown in @fig-q1-timeplot, the series displays clear monthly seasonality with
 #| label: fig-q1-seasonal
 #| fig-cap: "Seasonal plot illustrating consistent annual peaks and troughs"
 
-print_retail_act %>% gg_season(y) +
+print_retail_act %>% 
+  gg_season(y) +
   labs(x = "Month",
        y = "Turnover (million $AUD)", 
        title = "Newspaper and book retailing",
@@ -102,7 +105,8 @@ According to the seasonal plot in @fig-q1-seasonal, turnover often rises in Febr
 #| label: fig-q1-subseries
 #| fig-cap: "Subseries plot showing within-month trends over time."
 
-print_retail_act %>% gg_subseries(y) +
+print_retail_act %>% 
+  gg_subseries(y) +
   labs(x ="",
        y = "Turnover (million $AUD)", 
        title = "Newspaper and book retailing",
@@ -115,7 +119,6 @@ The subseries plot in @fig-q1-subseries confirms clear seasonality and shows tha
 #| label: fig-q1-lag
 #| fig-cap: "Lag plots showing a positive linear association at all lags, consistent with strong autocorrelation driven by trend and seasonality."
 #| fig-height: 10
-#| fig-width: 10
 
 print_retail_act %>% gg_lag(y, lags=1:24, geom='point') +
   facet_wrap(~ .lag, ncol=6) +
@@ -255,8 +258,9 @@ forecasts |>
 forecasts %>%
   accuracy(test_print_retail_act) %>%
   select(.model, ME, RMSE, MAE, MPE, MAPE, ACF1) %>%
-  mutate(across(where(is.numeric), round, 3)) %>%
-  kable(caption = "Forecast accuracy on the test set")
+  mutate(across(where(is.numeric), \(x) round(x, 3))) %>%
+  kable(caption = "Forecast accuracy on the test set") %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
 As demonstrated in @fig-q3-benchmarks and summarized in @tbl-q3-accuracy, Naive is the most appropriate benchmark because it has the lowest RMSE, MAE and MAPE on the test set. Drift performs similarly, since the series shows no clear overall trend and its forecasts are therefore close to the last observed value, but Naive is slightly more accurate. Although both Naive and drift do not capture the seasonal pattern as well as seasonal naive, seasonal naive produces much larger forecast errors on the test set. **Therefore, Naive is the best benchmark for this series.**
@@ -266,7 +270,15 @@ As demonstrated in @fig-q3-benchmarks and summarized in @tbl-q3-accuracy, Naive 
 
 *Can you construct better forecasting method(s) for your data? Give a brief description of these. Evaluate the method(s) over the test set and compare them to the benchmarks  (no more than 50 words each). This question requires you to think about and only use tools you have acquired so far in this unit. Only materials from up to and including Chapter 5 (not Chapter 8) can be used. (Notice that more weight is now placed on this part of the assignment) (14 marks)*
 
-The results in @fig-q4-forecast and @tbl-q4-accuracy show that using STL with Box-Cox, STL+Naive slightly outperformed STL+Drift, but both had higher errors than the Naive benchmark from Question 3 over this test period. This is likely due to the test set's unusually sharp decline, which decomposition models struggled to track. For this specific period, Naive remains preferred.
+
+**STL + Drift:** 
+We used STL decomposition with a Box-Cox transformation to separate the seasonal pattern from the underlying movement, and then used a drift method to forecast the seasonally adjusted series.
+
+**STL + Naive:** 
+We also used STL decomposition with a Box-Cox transformation, but used the Naive method to forecast the seasonally adjusted series while keeping the estimated seasonal pattern unchanged.
+
+**Evaluation:** 
+We tried these decomposition methods because the series has clear seasonality and changes over time. As shown in @fig-q4-forecast and @tbl-q4-accuracy, STL_naive performed slightly better than STL_drift, but both were less accurate than the Naive benchmark on the test set.
 
 
 ```{r}
@@ -275,10 +287,10 @@ The results in @fig-q4-forecast and @tbl-q4-accuracy show that using STL with Bo
 fit_q4 <- train_print_retail_act |>
   model(
     STL_naive = decomposition_model(
-      STL(box_cox(y, 0.403) ~ season(window = "periodic")),
+      STL(box_cox(y, lambda) ~ season(window = "periodic")),
       NAIVE(season_adjust)),
     STL_drift = decomposition_model(
-      STL(box_cox(y, 0.403) ~ season(window = "periodic")),
+      STL(box_cox(y, lambda) ~ season(window = "periodic")),
       RW(season_adjust ~ drift())))
 
 fc_q4 <- fit_q4 |>
@@ -311,7 +323,8 @@ acc_q4 <- fc_q4 |>
 acc_q4 |>
   select(.model, ME, RMSE, MAE, MPE, MAPE, ACF1) %>%
   mutate(across(where(is.numeric), round, 3)) %>%
-  kable(caption = "Forecast accuracy of decomposition methods on the test set")
+  kable(caption = "Forecast accuracy of decomposition methods on the test set")  %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
 \newpage
@@ -321,7 +334,7 @@ acc_q4 |>
 
 ```{r}
 #| label: tbl-q5-tscv
-#| tbl-cap: "Time series cross-validation accuracy comparison."
+
 retail_act_cv <- print_retail_act %>%
   stretch_tsibble(.init = 60, .step = 1)
 
@@ -329,21 +342,22 @@ cv_accuracy <- retail_act_cv %>%
   model(
     Naive = NAIVE(y),
     STL_Naive = decomposition_model(
-      STL(box_cox(y, 0.403) ~ season(window = "periodic")),
+      STL(box_cox(y, lambda) ~ season(window = "periodic")),
       NAIVE(season_adjust)),
     STL_Drift = decomposition_model(
-      STL(box_cox(y, 0.403) ~ season(window = "periodic")),
+      STL(box_cox(y, lambda) ~ season(window = "periodic")),
       RW(season_adjust ~ drift()))) %>%
   forecast(h = 1) %>%
   accuracy(print_retail_act)
 
 cv_accuracy %>%
   select(.model, RMSE, MAPE, MASE, RMSSE) %>%
-  mutate(across(where(is.numeric), round, 3)) %>%
-  kable(caption = "Time series cross-validation accuracy comparison")
+  mutate(across(where(is.numeric), \(x) round(x, 3))) %>%
+  kable(caption = "Time series cross-validation accuracy comparison") |>
+  kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
-The cross-validation results in @tbl-q5-tscv select STL_Naive as the best method. The cross-validation results differed from the test set results that the test set selected Naive, while cross-validation favoured STL_Naive. This suggests that STL_Naive performed better on average across the whole series, but Naive worked better in the final two years. **We therefore prefer STL_Naive**, as cross-validation provides a broader assessment of forecast performance. Its main advantage is using many rolling forecast origins rather than one split. However, it is more computationally expensive and may reflect the most recent period less closely than a single test set.
+The cross-validation results in @tbl-q5-tscv selected STL_Naive as the best method. This differed from the test set results, where Naive performed better over the final two-year period. The difference arises because cross-validation evaluates average one-step-ahead performance across many forecast origins, while the test set evaluates 24-step-ahead forecasts over one specific period. **We therefore prefer STL_Naive**, as cross-validation provides a broader assessment of forecast performance. Its main advantage is that it uses many rolling forecast origins rather than one split. However, it is more computationally expensive and may reflect the most recent period less closely than a single test set.
 
 \newpage
 ## Question 6
@@ -353,12 +367,13 @@ The cross-validation results in @tbl-q5-tscv select STL_Naive as the best method
 ```{r}
 #| label: fig-q6-residuals
 #| fig-cap: "Residual diagnostics for STL_Naive: time plot of innovation residuals (top), ACF of residuals (bottom left), and histogram of residuals (bottom right)."
+#| fig-height: 10
 
 
 best_fit <- train_print_retail_act %>%
   model(
     STL_Naive = decomposition_model(
-      STL(box_cox(y, 0.403) ~ season(window = "periodic")),
+      STL(box_cox(y, lambda) ~ season(window = "periodic")),
       NAIVE(season_adjust)
     )
   )
