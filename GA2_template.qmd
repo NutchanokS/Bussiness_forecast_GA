@@ -79,7 +79,7 @@ This series records monthly newspaper and book retail turnover in Australian Cap
 print_retail_act %>% 
   autoplot(y) +
   labs(x = "Month",
-       y = "Turnover (million $AUD)", 
+       y = "Turnover (Millions of Dollars)", 
        title = "Newspaper and book retailing",
        subtitle = "Australian Capital Territory")
 ```
@@ -93,7 +93,7 @@ As shown in @fig-q1-timeplot, the series displays clear monthly seasonality with
 print_retail_act %>% 
   gg_season(y) +
   labs(x = "Month",
-       y = "Turnover (million $AUD)", 
+       y = "Turnover (Millions of Dollars)", 
        title = "Newspaper and book retailing",
        subtitle = "Australian Capital Territory")
 ```
@@ -108,7 +108,7 @@ According to the seasonal plot in @fig-q1-seasonal, turnover often rises in Febr
 print_retail_act %>% 
   gg_subseries(y) +
   labs(x ="",
-       y = "Turnover (million $AUD)", 
+       y = "Turnover (Millions of Dollars)", 
        title = "Newspaper and book retailing",
        subtitle = "Australian Capital Territory")
 ```
@@ -122,7 +122,7 @@ The subseries plot in @fig-q1-subseries confirms clear seasonality and shows tha
 
 print_retail_act %>% gg_lag(y, lags=1:24, geom='point') +
   facet_wrap(~ .lag, ncol=6) +
-  labs(y = "Turnover (million $AUD)", 
+  labs(y = "Turnover (Millions of Dollars)", 
        title = "Newspaper and book retailing",
        subtitle = "Australian Capital Territory")
 ```
@@ -354,7 +354,7 @@ cv_accuracy %>%
   kable_styling()
 ```
 
-The cross-validation results in @tbl-q5-tscv selected STL_Naive as the best method. This differed from the test set results, where Naive performed better over the final two-year period. The difference arises because cross-validation evaluates average one-step-ahead performance across many forecast origins, while the test set evaluates 24-step-ahead forecasts over one specific period. **We therefore prefer STL_Naive**, as cross-validation provides a broader assessment of forecast performance. Its main advantage is that it uses many rolling forecast origins rather than one split. However, it is more computationally expensive and may reflect the most recent period less closely than a single test set.
+The cross-validation results in @tbl-q5-tscv identified **STL_Naive** as the best method. This differs from the test set results, where Naive performed better over the final two-year period. The discrepancy arises because cross-validation evaluates average one-step-ahead performance across multiple forecast origins, whereas the test set evaluates 24-step-ahead forecasts over one specific period. **We therefore prefer STL_Naive**, as it provides a broader assessment of long-term forecast stability forecast. Its primary advantage is the uses of numerous rolling forecast origins rather than a single data split. However, it is more computationally expensive and may reflect the most recent period less closely than a standalone test set.
 
 \newpage
 ## Question 6
@@ -413,10 +413,13 @@ As @fig-q7-forecasts illustrates, the final forecasts look reasonable as they re
 
 *Suppose that your group was a forecasting consulting group and you were working for a client. Give your group a name (add that to the subtitle above). Report your work here summarising and critically (think about assumption, limitations, extensions) evaluating the forecasts you are generating (no more than 200 words). (5 marks)*
 
-Prepared by GenieUS, we forecast the next 24 months of turnover for newspaper and book retailing in the Australian Capital Territory using STL decomposition with Naive forecasts applied to the seasonally adjusted series. This model was selected because it provided the most stable performance in time series cross-validation and captured the strong seasonal pattern in the data. 
+**GenieUS Forecasting Consulting | Client Report**
+
+We forecast the next 24 months of retail turnover for ACT newspaper and book retailing using an **STL decomposition model with Naïve forecasts** applied to the seasonally adjusted series, following a Box-Cox transformation (λ = 0.403) to stabilise seasonal variation. This model was selected because it provided the most stable performance in time series cross-validation and captured the strong, recurring seasonal pattern in the historical data. 
 
 ```{r}
 #| echo: false
+#| label: fig-q8-forecast
 
 best_fit_full %>%
   forecast(h = "24 months") %>%
@@ -427,6 +430,8 @@ best_fit_full %>%
   theme_minimal()
 ```
 
-The forecasts suggest that turnover is likely to remain at a relatively low level, with regular seasonal fluctuations continuing over the next 24 months. Prediction intervals widen over the forecast horizon, indicating increasing uncertainty in future values.
+As shown in @fig-q8-forecast, the point forecasts project continued low-level turnover with recurring seasonal fluctuations. The prediction intervals widen over the forecast horizon, appropriately reflecting compounding uncertainty.
 
-A key limitation is that the model does not capture all dependence in the series, and recent structural changes in the industry may reduce forecast reliability.  These forecasts also rely on the assumption that historical seasonal patterns will persist and that no major external shocks will occur. Future work could compare this approach with regression-based models or other methods that better handle structural change.
+**Critical evaluation**
+
+A key limitation is that the model does not capture all temporal dependence in the series, and recent structural shifts within the print media industry may impact forecast reliability. These forecasts rely on the assumption that historical seasonal patterns will persist and that no significant external shocks will occur. Future analysis could compare this approach with regression-based models or other methods to better account for structural change. Overall, these forecasts provide a reliable seasonal baseline for inventory planning, subject to close monitoring for further industry-wide shifts.
