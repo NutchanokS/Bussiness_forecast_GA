@@ -260,7 +260,7 @@ forecasts %>%
   select(.model, ME, RMSE, MAE, MPE, MAPE, ACF1) %>%
   mutate(across(where(is.numeric), \(x) round(x, 3))) %>%
   kable(caption = "Forecast accuracy on the test set") %>%
-  kable_styling(bootstrap_options = c("striped", "hover"))
+  kable_styling()
 ```
 
 As demonstrated in @fig-q3-benchmarks and summarized in @tbl-q3-accuracy, Naive is the most appropriate benchmark because it has the lowest RMSE, MAE and MAPE on the test set. Drift performs similarly, since the series shows no clear overall trend and its forecasts are therefore close to the last observed value, but Naive is slightly more accurate. Although both Naive and drift do not capture the seasonal pattern as well as seasonal naive, seasonal naive produces much larger forecast errors on the test set. **Therefore, Naive is the best benchmark for this series.**
@@ -324,7 +324,7 @@ acc_q4 |>
   select(.model, ME, RMSE, MAE, MPE, MAPE, ACF1) %>%
   mutate(across(where(is.numeric), round, 3)) %>%
   kable(caption = "Forecast accuracy of decomposition methods on the test set")  %>%
-  kable_styling(bootstrap_options = c("striped", "hover"))
+  kable_styling()
 ```
 
 \newpage
@@ -354,7 +354,7 @@ cv_accuracy %>%
   select(.model, RMSE, MAPE, MASE, RMSSE) %>%
   mutate(across(where(is.numeric), \(x) round(x, 3))) %>%
   kable(caption = "Time series cross-validation accuracy comparison") |>
-  kable_styling(bootstrap_options = c("striped", "hover"))
+  kable_styling()
 ```
 
 The cross-validation results in @tbl-q5-tscv selected STL_Naive as the best method. This differed from the test set results, where Naive performed better over the final two-year period. The difference arises because cross-validation evaluates average one-step-ahead performance across many forecast origins, while the test set evaluates 24-step-ahead forecasts over one specific period. **We therefore prefer STL_Naive**, as cross-validation provides a broader assessment of forecast performance. Its main advantage is that it uses many rolling forecast origins rather than one split. However, it is more computationally expensive and may reflect the most recent period less closely than a single test set.
@@ -370,7 +370,7 @@ The cross-validation results in @tbl-q5-tscv selected STL_Naive as the best meth
 #| fig-height: 10
 
 
-best_fit <- train_print_retail_act %>%
+best_fit <- print_retail_act %>%
   model(
     STL_Naive = decomposition_model(
       STL(box_cox(y, lambda) ~ season(window = "periodic")),
@@ -395,12 +395,12 @@ As shown in @fig-q6-residuals, the innovation residuals are mostly centred aroun
 
 ```{r}
 #| label: fig-q7-forecasts
-#| fig-cap: "24-month ahead point forecasts and 80%/95% prediction intervals from STL_Naive, fitted on the training set."
+#| fig-cap: "24-month ahead point forecasts and 80%/95% prediction intervals from STL_Naive, fitted on the full dataset."
 
 
-best_fit |> 
-  forecast(h = "24 months") |>
-  autoplot(train_print_retail_act) +
+best_fit %>%
+  forecast(h = "24 months") %>%
+  autoplot(print_retail_act) +
   labs(
     title = "24-Month Forecasts from STL_Naive",
     subtitle = "Newspaper and book retailing, Australian Capital Territory",
@@ -424,7 +424,7 @@ Prepared by GenieUS, we forecast the next 24 months of turnover for newspaper an
 
 best_fit |> 
   forecast(h = "24 months") |>
-  autoplot(train_print_retail_act) +
+  autoplot(print_retail_act) +
   labs(
     title = "24-Month Forecasts from STL_Naive",
     subtitle = "Newspaper and book retailing, Australian Capital Territory",
