@@ -219,8 +219,7 @@ train_print_retail_act |>
     title = "Train-Test Split of Turnover",
     subtitle = "Newspaper and book retailing, Australian Capital Territory",
     x = "Month",
-    y = "Turnover (Millions of Dollars)"
-  ) +
+    y = "Turnover (Millions of Dollars)") +
     theme_minimal()
 ```
 
@@ -233,8 +232,7 @@ fit <- train_print_retail_act |>
     mean   = MEAN(y),
     naive  = NAIVE(y),
     drift  = RW(y ~ drift()),
-    snaive = SNAIVE(y)
-  )
+    snaive = SNAIVE(y))
 
 forecasts <- fit |>
   forecast(h = "24 months")
@@ -247,8 +245,7 @@ forecasts |>
     subtitle = "Newspaper and book retailing, Australian Capital Territory",
     x = "Month",
     y = "Turnover (Millions of Dollars)",
-    colour = "Method"
-  ) +
+    colour = "Method") +
   theme_minimal()
 ```
 
@@ -370,23 +367,20 @@ The cross-validation results in @tbl-q5-tscv selected STL_Naive as the best meth
 #| fig-height: 10
 
 
-best_fit <- print_retail_act %>%
-  model(
-    STL_Naive = decomposition_model(
-      STL(box_cox(y, lambda) ~ season(window = "periodic")),
-      NAIVE(season_adjust)
-    )
-  )
+best_fit_train <- train_print_retail_act %>%
+  model(STL_Naive = decomposition_model(
+    STL(box_cox(y, lambda) ~ season(window = "periodic")),
+    NAIVE(season_adjust)))
 
-best_fit |> gg_tsresiduals()
+best_fit_train |> gg_tsresiduals()
 ```
 
 ```{r}
-augment(best_fit) %>%
+augment(best_fit_train) %>%
   features(.innov, ljung_box, lag = 24)
 ```
 
-As shown in @fig-q6-residuals, the innovation residuals are mostly centred around zero and the variance is fairly stable, although there are some large spikes. The histogram is roughly bell-shaped. The ACF shows several spikes beyond the significance limits, indicating that some autocorrelation remains in the residuals. This suggests the model has not fully captured all of the dependence in the series. The Ljung–Box test gives a very small p-value, confirming that the residuals are not white noise. Overall, the method works reasonably well, but some dependence remains unexplained.
+We fitted the model on the training set so that the residual analysis is consistent with the model used for earlier test set evaluation. As shown in @fig-q6-residuals, the innovation residuals are mostly centred around zero and the variance is fairly stable, although there are some large spikes. The histogram is roughly bell-shaped. The ACF shows several spikes beyond the significance limits, indicating that some autocorrelation remains in the residuals. This suggests the model has not fully captured all of the dependence in the series. The Ljung–Box test gives a very small p-value, confirming that the residuals are not white noise. Overall, the method works reasonably well, but some dependence remains unexplained. 
 
 \newpage
 ## Question 7
@@ -398,15 +392,17 @@ As shown in @fig-q6-residuals, the innovation residuals are mostly centred aroun
 #| fig-cap: "24-month ahead point forecasts and 80%/95% prediction intervals from STL_Naive, fitted on the full dataset."
 
 
-best_fit %>%
+best_fit_full <- print_retail_act %>%
+  model(STL_Naive = decomposition_model(
+    STL(box_cox(y, lambda) ~ season(window = "periodic")), 
+    NAIVE(season_adjust)))
+
+best_fit_full %>%
   forecast(h = "24 months") %>%
   autoplot(print_retail_act) +
-  labs(
-    title = "24-Month Forecasts from STL_Naive",
-    subtitle = "Newspaper and book retailing, Australian Capital Territory",
-    x = "Month",
-    y = "Turnover (Millions of Dollars)"
-  ) +
+  labs(title = "24-Month Forecasts from STL_Naive",
+       subtitle = "Newspaper and book retailing, Australian Capital Territory",
+       x = "Month", y = "Turnover (Millions of Dollars)") +
   theme_minimal()
 ```
 
@@ -422,15 +418,12 @@ Prepared by GenieUS, we forecast the next 24 months of turnover for newspaper an
 ```{r}
 #| echo: false
 
-best_fit |> 
-  forecast(h = "24 months") |>
+best_fit_full %>%
+  forecast(h = "24 months") %>%
   autoplot(print_retail_act) +
-  labs(
-    title = "24-Month Forecasts from STL_Naive",
-    subtitle = "Newspaper and book retailing, Australian Capital Territory",
-    x = "Month",
-    y = "Turnover (Millions of Dollars)"
-  ) +
+  labs(title = "24-Month Forecasts from STL_Naive",
+       subtitle = "Newspaper and book retailing, Australian Capital Territory",
+       x = "Month", y = "Turnover (Millions of Dollars)") +
   theme_minimal()
 ```
 
