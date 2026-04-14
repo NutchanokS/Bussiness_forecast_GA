@@ -267,17 +267,6 @@ As demonstrated in @fig-q3-benchmarks and summarized in @tbl-q3-accuracy, Naive 
 
 *Can you construct better forecasting method(s) for your data? Give a brief description of these. Evaluate the method(s) over the test set and compare them to the benchmarks  (no more than 50 words each). This question requires you to think about and only use tools you have acquired so far in this unit. Only materials from up to and including Chapter 5 (not Chapter 8) can be used. (Notice that more weight is now placed on this part of the assignment) (14 marks)*
 
-
-**STL + Drift:** 
-We used STL decomposition with a Box-Cox transformation to separate the seasonal pattern from the underlying movement, and then used a drift method to forecast the seasonally adjusted series.
-
-**STL + Naive:** 
-We also used STL decomposition with a Box-Cox transformation, but used the Naive method to forecast the seasonally adjusted series while keeping the estimated seasonal pattern unchanged.
-
-**Evaluation:** 
-We tried these decomposition methods because the series has clear seasonality and changes over time. As shown in @fig-q4-forecast and @tbl-q4-accuracy, STL_naive performed slightly better than STL_drift, but both were less accurate than the Naive benchmark on the test set.
-
-
 ```{r}
 #| label: fit-q4-methods
 
@@ -323,6 +312,15 @@ acc_q4 |>
   kable(caption = "Forecast accuracy of decomposition methods on the test set")  %>%
   kable_styling()
 ```
+
+**STL + Drift:** 
+We used STL decomposition with a Box-Cox transformation to separate the seasonal pattern from the underlying movement, and then used a drift method to forecast the seasonally adjusted series.
+
+**STL + Naive:** 
+We also used STL decomposition with a Box-Cox transformation, but used the Naive method to forecast the seasonally adjusted series while keeping the estimated seasonal pattern unchanged.
+
+**Evaluation:** 
+We tried these decomposition methods because the series has clear seasonality and changes over time. As shown in @fig-q4-forecast and @tbl-q4-accuracy, STL_naive performed slightly better than STL_drift, but both were less accurate than the Naive benchmark on the test set.
 
 \newpage
 ## Question 5
