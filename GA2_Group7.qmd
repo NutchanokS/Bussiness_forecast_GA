@@ -1,0 +1,435 @@
+---
+title: "ETF5231 Group Assignment 2"
+subtitle: 'Group7 GenieUS'
+author:
+  - Ting-Ting Wu (35717343)
+  - Tzu-Hsuan, Yang (35461586)
+  - Nutchanok Saitin (35493011)
+  - Heng-Hsieh, Chang (35567201)
+format:
+  pdf
+---
+
+```{r}
+#| label: setup
+#| include: false
+
+knitr::opts_chunk$set(echo = TRUE, eval=TRUE, error=TRUE, cache=FALSE, warning=FALSE, message=FALSE, fig.width = 10)
+
+library(fpp3)
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(patchwork)
+library(knitr)
+library(kableExtra)
+```
+
+```{r}
+#| include: false
+
+meta <- read_csv("GA_data.csv", col_names = TRUE, n_max = 3)
+
+dat <- read_csv("GA_data.csv", 
+                col_names = colnames(meta),
+                skip = 4)
+
+print_retail_act <- dat %>% 
+  rename(Month = "Student ID", y ="Group 7") %>%
+  select(Month, y) %>% 
+  mutate(Month=yearmonth(Month)) %>% 
+  as_tsibble(index = Month)
+```
+
+## Question 1
+
+*What is your data about (no more than 50 words for each series)? Produce appropriate plots in order to become familiar with your data. Make sure you label your axes and plots appropriately. Comment on these. What do you see? (no more than 50 words per plot). (14 marks)*
+
+```{r about data}
+
+# Name and unit of data
+sector_name <- meta %>%
+  filter(`Student ID` == "Sector") %>%
+  pull(`Group 7`)
+
+data_unit <- meta %>%
+  filter(`Student ID` == "Unit") %>%
+  pull(`Group 7`)
+
+cat("Sector: ", sector_name, "\n")
+cat("Unit: ", data_unit, "\n")
+```
+
+```{r data structure}
+
+head(print_retail_act, 3)
+tail(print_retail_act, 3)
+```
+
+**What is the data about**
+
+This series records monthly newspaper and book retail turnover in Australian Capital Territory, measured in millions of dollars, over the period April 1982 to June 2023.
+
+**Get to know the data**
+
+```{r}
+#| label: fig-q1-timeplot
+#| fig-cap: "Time plot of monthly newspaper and book retail turnover in ACT (1982-2023)."
+
+print_retail_act %>% 
+  autoplot(y) +
+  labs(x = "Month",
+       y = "Turnover (Millions of Dollars)", 
+       title = "Newspaper and book retailing",
+       subtitle = "Australian Capital Territory")
+```
+
+As shown in @fig-q1-timeplot, the series displays clear monthly seasonality with regular peaks and drops. It also changes over time, rising in the earlier years and falling in the later years. The ups and downs look bigger when turnover is higher, so the variation does not seem constant.
+
+```{r}
+#| label: fig-q1-seasonal
+#| fig-cap: "Seasonal plot illustrating consistent annual peaks and troughs"
+
+print_retail_act %>% 
+  gg_season(y) +
+  labs(x = "Month",
+       y = "Turnover (Millions of Dollars)", 
+       title = "Newspaper and book retailing",
+       subtitle = "Australian Capital Territory")
+```
+
+According to the seasonal plot in @fig-q1-seasonal, turnover often rises in February and July and peaks in December. This may reflect back-to-school spending, mid-year sales or holidays, and Christmas shopping. Recent years are also lower than earlier years, suggesting a fall in overall turnover.
+
+
+```{r}
+#| label: fig-q1-subseries
+#| fig-cap: "Subseries plot showing within-month trends over time."
+
+print_retail_act %>% 
+  gg_subseries(y) +
+  labs(x ="",
+       y = "Turnover (Millions of Dollars)", 
+       title = "Newspaper and book retailing",
+       subtitle = "Australian Capital Territory")
+```
+
+The subseries plot in @fig-q1-subseries confirms clear seasonality and shows that February–March and July–August generally have higher turnover than most months, while December has the highest average. It also shows that turnover in most months has fallen in recent years compared with earlier years.
+
+```{r}
+#| label: fig-q1-lag
+#| fig-cap: "Lag plots showing a positive linear association at all lags, consistent with strong autocorrelation driven by trend and seasonality."
+#| fig-height: 10
+
+print_retail_act %>% gg_lag(y, lags=1:24, geom='point') +
+  facet_wrap(~ .lag, ncol=6) +
+  labs(y = "Turnover (Millions of Dollars)", 
+       title = "Newspaper and book retailing",
+       subtitle = "Australian Capital Territory")
+```
+
+As @fig-q1-lag shows, all lag plots display a positive linear pattern rather than a random cloud. Points with high past turnover are generally associated with high current turnover, while low past values are associated with low current turnover. This suggests positive autocorrelation.
+
+```{r}
+#| label: fig-q1-acf
+#| fig-cap: "ACF plot showing decaying autocorrelations with pronounced spikes at lags 12, 24, 36 and 48, confirming trend and annual seasonality."
+
+
+print_retail_act  %>% 
+  ACF(y, lag_max = 50) %>%
+  autoplot()
+```
+
+As @fig-q1-acf confirms the ACF remains above the significance limits across all lags shown, with pronounced seasonal spikes at lags 12, 24, 36 and 48. This shows the series is not white noise and that there is still strong dependence over time and suggests a strong seasonal pattern with a period of 12. This indicates that observations are correlated with values from the same season in previous years.
+
+\newpage
+## Question 2
+
+*Would transforming your data be useful (no more than 50 words)? Choose a transformation and justify your choice (no more than 50 words). (5 marks)*
+
+
+```{r lambda}
+lambda_tbl <- print_retail_act %>%
+  features(y, guerrero)
+
+lambda_tbl %>%
+  mutate(lambda_guerrero = round(lambda_guerrero, 4)) %>%
+  rename(`Guerrero lambda` = lambda_guerrero) %>%
+  kable(caption = "Estimated transformation parameter from Guerrero's method")
+```
+
+
+Since the estimated Box-Cox lambda is 0.403, a log transformation is not the best choice. Based on the comparisons in @fig-q2-comparison, Box-Cox transformation would be most suitable for stabilizing variance. Square root transformation could also be used as a simple approximation because 0.403 is close to 0.5. 
+
+
+```{r}
+#| label: fig-q2-comparison
+#| fig-cap: "Comparison of the original series with Box-Cox (λ = 0.403) and square root (λ = 0.5) transformed series."
+#| fig-height: 12
+#| fig-width: 10
+
+lambda <- 0.403
+
+p1 <- print_retail_act %>%
+  autoplot(y) +
+  labs(
+    title = "Original series",
+    x = "Month",
+    y = "Turnover ($ Millions)")
+
+p2 <- print_retail_act %>%
+  autoplot(box_cox(y, lambda)) +
+  labs(
+    title = expression("Box-Cox transformed series (" * lambda == 0.403 * ")"),
+    x = "Month",
+    y = "Box-Cox(Turnover)")
+
+p3 <- print_retail_act %>%
+  autoplot(box_cox(y, 0.5)) +
+  labs(
+    title = "Square root transformed series",
+    x = "Month",
+    y = "Box-Cox(Turnover)")
+
+(p1 / p2 / p3) +
+  plot_annotation(
+    title = "Comparison of the original series and Box-Cox transformed series",
+    theme = theme(
+      plot.title = element_text(hjust = 0.5, face = "bold", size = 16)))
+```
+
+\newpage
+## Question 3
+
+*Split your data into training and test sets. Leave the last two years’ worth of observations as the test set. Apply all four benchmark methods on the training set. Generate forecasts for the test set and plot them on the same graph. Compare their forecasting performance on the test set. Which method would you choose as an appropriate benchmark? Justify your answer (no more than 100 words). (Hint: it will be useful to tabulate your results.) (6 marks)*
+
+```{r}
+#| label: fig-q3-datasplit
+#| fig-cap: "Train-test split of the series, with the test set in purple."
+
+train_print_retail_act <- print_retail_act |> 
+  slice(1:(n() - 24))
+
+test_print_retail_act  <- print_retail_act |> 
+  slice((n() - 23):n())
+
+train_print_retail_act |>
+  autoplot(y) +
+  autolayer(test_print_retail_act, y, colour = "purple") +
+  labs(
+    title = "Train-Test Split of Turnover",
+    subtitle = "Newspaper and book retailing, Australian Capital Territory",
+    x = "Month",
+    y = "Turnover (Millions of Dollars)") +
+    theme_minimal()
+```
+
+```{r}
+#| label: fig-q3-benchmarks
+#| fig-cap: "Forecasts from the four benchmark methods on the test set."
+
+fit <- train_print_retail_act |>
+  model(
+    mean   = MEAN(y),
+    naive  = NAIVE(y),
+    drift  = RW(y ~ drift()),
+    snaive = SNAIVE(y))
+
+forecasts <- fit |>
+  forecast(h = "24 months")
+
+forecasts |>
+  autoplot(train_print_retail_act, level = NULL) +
+  autolayer(test_print_retail_act, y, colour = "grey50") +
+  labs(
+    title = "Forecasts from Benchmark Methods",
+    subtitle = "Newspaper and book retailing, Australian Capital Territory",
+    x = "Month",
+    y = "Turnover (Millions of Dollars)",
+    colour = "Method") +
+  theme_minimal()
+```
+
+```{r}
+#| label: tbl-q3-accuracy
+
+forecasts %>%
+  accuracy(test_print_retail_act) %>%
+  select(.model, ME, RMSE, MAE, MPE, MAPE, ACF1) %>%
+  mutate(across(where(is.numeric), \(x) round(x, 3))) %>%
+  kable(caption = "Forecast accuracy on the test set") %>%
+  kable_styling()
+```
+
+As demonstrated in @fig-q3-benchmarks and summarized in @tbl-q3-accuracy, Naive is the most appropriate benchmark because it has the lowest RMSE, MAE and MAPE on the test set. Drift performs similarly, since the series shows no clear overall trend and its forecasts are therefore close to the last observed value, but Naive is slightly more accurate. Although both Naive and drift do not capture the seasonal pattern as well as seasonal naive, seasonal naive produces much larger forecast errors on the test set. **Therefore, Naive is the best benchmark for this series.**
+
+\newpage
+## Question 4
+
+*Can you construct better forecasting method(s) for your data? Give a brief description of these. Evaluate the method(s) over the test set and compare them to the benchmarks  (no more than 50 words each). This question requires you to think about and only use tools you have acquired so far in this unit. Only materials from up to and including Chapter 5 (not Chapter 8) can be used. (Notice that more weight is now placed on this part of the assignment) (14 marks)*
+
+```{r}
+#| label: fit-q4-methods
+
+fit_q4 <- train_print_retail_act |>
+  model(
+    STL_naive = decomposition_model(
+      STL(box_cox(y, lambda) ~ season(window = "periodic")),
+      NAIVE(season_adjust)),
+    STL_drift = decomposition_model(
+      STL(box_cox(y, lambda) ~ season(window = "periodic")),
+      RW(season_adjust ~ drift())))
+
+fc_q4 <- fit_q4 |>
+  forecast(h = "24 months")
+```
+
+```{r}
+#| label: fig-q4-forecast
+#| fig-cap: "Point forecasts from STL-based decomposition methods (STL+Naive and STL+Drift) over the 24-month test period, with actual test observations in grey."
+
+
+fc_q4 |>
+  autoplot(train_print_retail_act, level = NULL) +
+  autolayer(test_print_retail_act, y, colour = "grey50") +
+  labs(
+    title = "Forecasts from Decomposition Methods",
+    x = "Month",
+    y = "Turnover (Millions of Dollars)",
+    colour = "Method") +
+  theme_minimal()
+```
+
+```{r}
+#| label: tbl-q4-accuracy
+
+acc_q4 <- fc_q4 |>
+  accuracy(test_print_retail_act) |>
+  mutate(across(where(is.numeric), round, 3))
+
+acc_q4 |>
+  select(.model, ME, RMSE, MAE, MPE, MAPE, ACF1) %>%
+  mutate(across(where(is.numeric), round, 3)) %>%
+  kable(caption = "Forecast accuracy of decomposition methods on the test set")  %>%
+  kable_styling()
+```
+
+**STL + Drift:** 
+We used STL decomposition with a Box-Cox transformation to separate the seasonal pattern from the underlying movement, and then used a drift method to forecast the seasonally adjusted series.
+
+**STL + Naive:** 
+We also used STL decomposition with a Box-Cox transformation, but used the Naive method to forecast the seasonally adjusted series while keeping the estimated seasonal pattern unchanged.
+
+**Evaluation:** 
+We tried these decomposition methods because the series has clear seasonality and changes over time. As shown in @fig-q4-forecast and @tbl-q4-accuracy, STL_naive performed slightly better than STL_drift, but both were less accurate than the Naive benchmark on the test set.
+
+\newpage
+## Question 5
+
+*Use time series cross-validation to select the best of the methods you have so far considered (you may only consider the most appropriate of the four benchmarks). Tabulate your results. How do these compare with the test set? Comment on the advantages and/or disadvantages of using this method (no more than 100 words). (10 marks)*
+
+```{r}
+#| label: tbl-q5-tscv
+
+retail_act_cv <- print_retail_act %>%
+  stretch_tsibble(.init = 60, .step = 1)
+
+cv_accuracy <- retail_act_cv %>%
+  model(
+    Naive = NAIVE(y),
+    STL_Naive = decomposition_model(
+      STL(box_cox(y, lambda) ~ season(window = "periodic")),
+      NAIVE(season_adjust)),
+    STL_Drift = decomposition_model(
+      STL(box_cox(y, lambda) ~ season(window = "periodic")),
+      RW(season_adjust ~ drift()))) %>%
+  forecast(h = 1) %>%
+  accuracy(print_retail_act)
+
+cv_accuracy %>%
+  select(.model, RMSE, MAPE, MASE, RMSSE) %>%
+  mutate(across(where(is.numeric), \(x) round(x, 3))) %>%
+  kable(caption = "Time series cross-validation accuracy comparison") |>
+  kable_styling()
+```
+
+The cross-validation results in @tbl-q5-tscv identified **STL_Naive** as the best method. This differs from the test set results, where Naive performed better over the final two-year period. The discrepancy arises because cross-validation evaluates average one-step-ahead performance across multiple forecast origins, whereas the test set evaluates 24-step-ahead forecasts over one specific period. **We therefore prefer STL_Naive**, as it provides a broader assessment of long-term forecast stability forecast. Its primary advantage is the uses of numerous rolling forecast origins rather than a single data split. However, it is more computationally expensive and may reflect the most recent period less closely than a standalone test set.
+
+\newpage
+## Question 6
+
+*For the best method, do a residual analysis. Comment on these (no more than 150 words). (4 marks)*
+
+```{r}
+#| label: fig-q6-residuals
+#| fig-cap: "Residual diagnostics for STL_Naive: time plot of innovation residuals (top), ACF of residuals (bottom left), and histogram of residuals (bottom right)."
+#| fig-height: 10
+
+
+best_fit_train <- train_print_retail_act %>%
+  model(STL_Naive = decomposition_model(
+    STL(box_cox(y, lambda) ~ season(window = "periodic")),
+    NAIVE(season_adjust)))
+
+best_fit_train |> gg_tsresiduals()
+```
+
+```{r}
+augment(best_fit_train) %>%
+  features(.innov, ljung_box, lag = 24)
+```
+
+We fitted the model on the training set so that the residual analysis is consistent with the model used for earlier test set evaluation. As shown in @fig-q6-residuals, the innovation residuals are mostly centred around zero and the variance is fairly stable, although there are some large spikes. The histogram is roughly bell-shaped. The ACF shows several spikes beyond the significance limits, indicating that some autocorrelation remains in the residuals. This suggests the model has not fully captured all of the dependence in the series. The Ljung–Box test gives a very small p-value, confirming that the residuals are not white noise. Overall, the method works reasonably well, but some dependence remains unexplained. 
+
+\newpage
+## Question 7
+
+*Generate point forecasts for the next 2 years (future) from the method you have classified as best and plot them. Compare these visually and comment on the point and prediction intervals (no more than 100 words). (6 marks)*
+
+```{r}
+#| label: fig-q7-forecasts
+#| fig-cap: "24-month ahead point forecasts and 80%/95% prediction intervals from STL_Naive, fitted on the full dataset."
+
+
+best_fit_full <- print_retail_act %>%
+  model(STL_Naive = decomposition_model(
+    STL(box_cox(y, lambda) ~ season(window = "periodic")), 
+    NAIVE(season_adjust)))
+
+best_fit_full %>%
+  forecast(h = "24 months") %>%
+  autoplot(print_retail_act) +
+  labs(title = "24-Month Forecasts from STL_Naive",
+       subtitle = "Newspaper and book retailing, Australian Capital Territory",
+       x = "Month", y = "Turnover (Millions of Dollars)") +
+  theme_minimal()
+```
+
+As @fig-q7-forecasts illustrates, the final forecasts look reasonable as they retain the strong seasonal pattern in the series, with peaks still occurring near the end of each year. The point forecasts suggest continued seasonal fluctuations with a slight upward movement from the final observations. The prediction intervals widen as the forecast horizon increases, indicating greater uncertainty about future values. Overall, the model captures the seasonality well, but the wide prediction intervals suggest considerable uncertainty in longer-term forecasts.
+
+\newpage
+## Question 8
+
+*Suppose that your group was a forecasting consulting group and you were working for a client. Give your group a name (add that to the subtitle above). Report your work here summarising and critically (think about assumption, limitations, extensions) evaluating the forecasts you are generating (no more than 200 words). (5 marks)*
+
+**GenieUS Forecasting Consulting | Client Report**
+
+We forecast the next 24 months of retail turnover for ACT newspaper and book retailing using an **STL decomposition model with Naïve forecasts** applied to the seasonally adjusted series, following a Box-Cox transformation (λ = 0.403) to stabilise seasonal variation. This model was selected because it provided the most stable performance in time series cross-validation and captured the strong, recurring seasonal pattern in the historical data. 
+
+```{r}
+#| echo: false
+#| label: fig-q8-forecast
+
+best_fit_full %>%
+  forecast(h = "24 months") %>%
+  autoplot(print_retail_act) +
+  labs(title = "24-Month Forecasts from STL_Naive",
+       subtitle = "Newspaper and book retailing, Australian Capital Territory",
+       x = "Month", y = "Turnover (Millions of Dollars)") +
+  theme_minimal()
+```
+
+As shown in @fig-q8-forecast, the point forecasts project continued low-level turnover with recurring seasonal fluctuations. The prediction intervals widen over the forecast horizon, appropriately reflecting compounding uncertainty.
+
+**Critical evaluation**
+
+A key limitation is that the model does not capture all temporal dependence in the series, and recent structural shifts within the print media industry may impact forecast reliability. These forecasts rely on the assumption that historical seasonal patterns will persist and that no significant external shocks will occur. Future analysis could compare this approach with regression-based models or other methods to better account for structural change. Overall, these forecasts provide a reliable seasonal baseline for inventory planning, subject to close monitoring for further industry-wide shifts.
