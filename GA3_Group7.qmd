@@ -48,8 +48,18 @@ For the tasks that follow you will be modelling the original data without any tr
 
 *Plot your time series. By observing the plot and describing its components select an ETS model you think is appropriate for forecasting. Make sure you justify your choice (no more than 150 words). (8 marks)*
 
-```{r}
+As shown in @fig-q1-series, the ACT newspaper and book retailing series has clear monthly fluctuations and a changing overall level. The series rises in the earlier years, stays relatively high around the middle of the sample, and then falls strongly in the later years. Because the direction of the series changes over time, we do not think an additive or damped trend is suitable. The size of the seasonal fluctuations and the random variation also seem larger when turnover is high, and smaller when turnover is low. This means the errors are more likely to be proportional to the level, so a multiplicative error structure is reasonable. Therefore, we choose ETS(M,N,M), which allows multiplicative errors and seasonality without forcing a fixed trend.
 
+```{r}
+#| label: fig-q1-timeplot
+#| fig-cap: "Time plot of monthly newspaper and book retail turnover in ACT (1982-2023)."
+
+print_retail_act %>% 
+  autoplot(y) +
+  labs(x = "Month",
+       y = "Turnover (Millions of Dollars)", 
+       title = "Newspaper and book retailing",
+       subtitle = "Australian Capital Territory")
 ```
 
 \newpage
@@ -57,9 +67,18 @@ For the tasks that follow you will be modelling the original data without any tr
 
 *Search for an ETS model for your series using appropriate information criteria. Describe the process you have implemented. Which part of the data is used in this process? Which model have you selected and why? Show all necessary output (10 marks)*
 
-```{r}
+The `ETS()` function considers the admissible ETS models and selects the model with the lowest AICc, balancing goodness of fit and model complexity. The automatic search selected ETS(M,N,M), which is consistent with our choice in Question 1. The whole available time series was used in this process, because this question focuses on information criteria rather than out-of-sample evaluation. The output from `report()` shows that the selected model has multiplicative errors, no trend and multiplicative seasonality. The reported information criteria are $AIC = 2744.476$, $AICc = 2745.478$ and $BIC = 2807.544$. This supports our visual choice, because both the time plot and the AICc-based search suggest proportional errors and seasonal variation, but no stable long-term trend.
 
+```{r}
+#| label: tbl-q2-auto-report
+#| tbl-cap: "Automatically selected ETS model for the Group 7 series."
+
+auto_fit <- print_retail_act %>%
+  model(auto_ets = ETS(y))
+
+report(auto_fit)
 ```
+
 \newpage
 ## Question 3
 
