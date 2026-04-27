@@ -10,12 +10,35 @@ format:
   pdf
 ---
 
-```{r setup, include=FALSE}
+```{r}
 #| label: setup
 #| include: false
 
-knitr::opts_chunk$set(echo = TRUE, eval=TRUE, error=TRUE, cache=TRUE)
-# write the appropriate code to read in your group data from Group_Data.csv
+knitr::opts_chunk$set(echo = TRUE, eval=TRUE, error=TRUE, cache=FALSE, warning=FALSE, message=FALSE, fig.width = 10)
+
+library(fpp3)
+library(readr)
+library(dplyr)
+library(ggplot2)
+library(patchwork)
+library(knitr)
+library(kableExtra)
+```
+
+```{r}
+#| include: false
+
+meta <- read_csv("GA_data.csv", col_names = TRUE, n_max = 3)
+
+dat <- read_csv("GA_data.csv", 
+                col_names = colnames(meta),
+                skip = 4)
+
+print_retail_act <- dat %>% 
+  rename(Month = "Student ID", y ="Group 7") %>%
+  select(Month, y) %>% 
+  mutate(Month=yearmonth(Month)) %>% 
+  as_tsibble(index = Month)
 ```
 
 For the tasks that follow you will be modelling the original data without any transformation performed (even if you previously deemed it necessary). 
