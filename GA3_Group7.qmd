@@ -197,8 +197,65 @@ cv_fc_24_h |>
 *Which model do you prefer for your data? Choose a model and briefly explain your choice. Plot and describe its components and comment on the estimated parameters and how these are appropriate for your data. Perform all the necessary diagnostic checks and comment. (max 400 words) (14 marks)*
 
 ```{r}
+#| label: tbl-q4-ets-mnm-report
 
+fit_ets_mnm <- print_retail_act |>
+  model(
+    ETS_MNM = ETS(y ~ error("M") + trend("N") + season("M"))
+  )
+
+report(fit_ets_mnm)
 ```
+
+```{r}
+#| label: fig-q4-ets-mnm-components
+
+fit_ets_mnm |>
+  components() |>
+  autoplot() +
+  labs(
+    title = "Components of ETS(M,N,M)",
+    subtitle = "Multiplicative error, no trend, and multiplicative seasonality"
+  ) +
+  theme_minimal()
+```
+
+```{r}
+#| label: fig-q4-ets-mnm-residuals
+#| message: false
+#| warning: false
+#| fig-width: 10
+#| fig-height: 6
+#| fig-cap: "Residual diagnostics for the ETS(M,N,M) model."
+
+fit_ets_mnm |>
+  gg_tsresiduals()
+```
+
+```{r}
+#| label: tbl-q4-ets-mnm-ljung-box
+
+ljung_fit <- fit_ets_mnm |>
+  augment() |>
+  features(.innov, ljung_box, lag = 24)
+
+ljung_fit |>
+    kable(
+        caption = "Ljung-Box test results for the ETS(M,N,M) model residuals."
+    )
+```
+
+The `ETS(M,N,M)` model is considered the preferred model because it has the lowest AICc among the ETS candidates and was also supported by the time series cross-validation results. This model allows for multiplicative errors and multiplicative seasonality, with no trend component. This is appropriate because the series shows strong seasonal variation, but no stable linear trend over the full sample. 
+
+The estimated smoothing parameters are $\alpha=0.402$ and $\gamma=0.318$. These values suggest that both the level and seasonal components are updated moderately as new observations become available. The absence of a trend smoothing parameter is consistent with the `ETS(M,N,M)` specification. 
+
+@fig-q4-ets-mnm-components supports this model choice. The level component changes over time but does not follow a stable linear upward or downward trend, supporting the no-trend specification. The seasonal component shows a strong pattern, which supports the use of multiplicative seasonality. The seasonal fluctuations are consistently present across the sample with varying sizes, especially around the end of the series. The remainder is mostly centred around zero, but some large movements remain, especially around 2020. 
+
+@fig-q4-ets-mnm-residuals show that the innovation residuals mostly fluctuate around zero, but there are clear outliers around 2020 and slightly larger variation near the end of the sample. The ACF plot shows several spikes outside the significance bounds, suggesting that some autocorrelation remains. The residual histogram is centred near zero, although it shows some skewness and extreme values. 
+
+The Ljung-Box test in @tbl-q4-ets-mnm-ljung-box was applied at lag 24. For ETS(M,N,M), there are 14 estimated parameters, including two smoothing parameters. The test gives $p = 2.27×10^{−10}$ < 0.05, so the null hypothesis is rejected, the residuals are not consistent with white noise. 
+
+Therefore, ETS(M,N,M) captures the main seasonal structure, but the residual diagnostics indicate some remaining unexplained dependence.
 
 \newpage
 ## Question 5
