@@ -48,7 +48,7 @@ For the tasks that follow you will be modelling the original data without any tr
 
 *Plot your time series. By observing the plot and describing its components select an ETS model you think is appropriate for forecasting. Make sure you justify your choice (no more than 150 words). (8 marks)*
 
-As shown in @fig-q1-series, the ACT newspaper and book retailing series has clear monthly fluctuations and a changing overall level. The series rises in the earlier years, stays relatively high around the middle of the sample, and then falls strongly in the later years. Because the direction of the series changes over time, we do not think an additive or damped trend is suitable. The size of the seasonal fluctuations and the random variation also seem larger when turnover is high, and smaller when turnover is low. This means the errors are more likely to be proportional to the level, so a multiplicative error structure is reasonable. Therefore, we choose ETS(M,N,M), which allows multiplicative errors and seasonality without forcing a fixed trend.
+As shown in @fig-q1-timeplot, the ACT newspaper and book retailing series has clear monthly fluctuations and a changing overall level. The series rises in the earlier years, stays relatively high around the middle of the sample, and then falls strongly in the later years. Because the direction of the series changes over time, we do not think an additive or damped trend is suitable. The size of the seasonal fluctuations and the random variation also seem larger when turnover is high, and smaller when turnover is low. This means the errors are more likely to be proportional to the level, so a multiplicative error structure is reasonable. Therefore, we choose ETS(M,N,M), which allows multiplicative errors and seasonality without forcing a fixed trend.
 
 ```{r}
 #| label: fig-q1-timeplot
@@ -79,13 +79,114 @@ auto_fit <- print_retail_act %>%
 report(auto_fit)
 ```
 
+```{r}
+#| label: fig-q2-components
+#| fig-cap: "Estimated components from the ETS(M,A,M) model."
+#| fig-width: 10
+#| fig-height: 10
+
+auto_fit %>%
+  components() %>%
+  autoplot()
+```
+
 \newpage
 ## Question 3
 
 *Now use time series cross-validation to compare the model selected from the previous step, along with ETS(M,N,M), ETS(M,A,M) and ETS(M,Ad,M) models. You will need to think about more than h=1 step-ahead. Think about an appropriate range of forecast horizons and justify your choice. Fully describe the process you have implemented. Show all necessary output. (Hint the code at the end of this section [https://otexts.com/fpp3/tscv.html](https://otexts.com/fpp3/tscv.html) may help you to get started.) (22 marks)*
 
-```{r}
+Time series cross-validation was used to compare the candidate ETS models beyond one-step-ahead forecasts. We used 12 month and 24 month forecast horizons, representing one and two full seasonal cycles. For the 12 month horizon, `.init = 120` was used, giving 10 years of initial monthly data. For the 24 month horizon, `.init = 180` was used, giving 15 years of initial monthly data. In both cases, `.step = 1` was used so the training window moved forward one month at a time. This uses every possible monthly forecast origin after the initial training period, giving a more detailed and stable comparison of forecast accuracy.
 
+The 12 month results in @tbl-q3-cv-accuracy-12 show that ETS(M,N,M) has the lowest RMSE, MAE, MAPE, MASE and RMSSE. The pattern in @fig-q3-rmse-h12 is similar, with RMSE increases as the forecast horizon increases, and ETS(M,N,M) remains the lowest error model across most horizons.
+
+The 24 month results in @tbl-q3-cv-accuracy-24 show the same ranking, with ETS(M,N,M) still giving the best overall accuracy. In @fig-q3-rmse-h24, RMSE again increases with the forecast horizon. However, ETS(M,N,M) and ETS(M,Ad,M) become very close at longer horizons, while ETS(M,A,M) has clearly higher RMSE after the early horizons.
+
+Overall, the cross-validation results support selecting ETS(M,N,M). It performs best for both 12 month and 24 month horizons, suggesting that multiplicative errors and multiplicative seasonality are useful, but adding an additive or damped trend does not improve forecast accuracy.
+
+```{r}
+#| label: tbl-q3-cv-accuracy-12
+#| tbl-cap: "Time series cross-validation accuracy for the candidate ETS models using a 12-month forecast horizon."
+
+print_retail_cv <- print_retail_act |>
+  stretch_tsibble(.init = 120, .step = 1)
+
+cv_fit <- print_retail_cv |>
+  model(mnm = ETS(y ~ error("M") + trend("N")  + season("M")),
+        mam = ETS(y ~ error("M") + trend("A")  + season("M")),
+        madm = ETS(y ~ error("M") + trend("Ad") + season("M")))
+
+cv_fc_12 <- cv_fit |>
+  forecast(h = 12)
+
+cv_acc_12 <- cv_fc_12 |>
+  accuracy(print_retail_act) |>
+  arrange(RMSE)
+
+cv_acc_12 |>
+  select(.model, .type, RMSE, MAE, MAPE, MASE, RMSSE, ACF1) |>
+  kable(digits = 3)
+```
+
+```{r}
+#| label: fig-q3-rmse-h12
+#| fig-cap: "Cross-validation RMSE by forecast horizon for the candidate ETS models using a 12-month forecast horizon."
+
+cv_fc_12_h <- cv_fc_12 |>
+  group_by(.id, .model) |>
+  mutate(h = row_number()) |>
+  ungroup() |>
+  as_fable(response = "y", distribution = y)
+
+cv_fc_12_h |>
+  accuracy(print_retail_act, by = c("h", ".model")) |>
+  ggplot(aes(x = h, y = RMSE, colour = .model)) +
+  geom_point() +
+  geom_line() +
+  scale_x_continuous(breaks = seq(1, 12, by = 2)) +
+  labs(x = "Forecast horizon", y = "RMSE",
+       colour = "Model",
+       title = "Cross-validation RMSE by forecast horizon",
+       subtitle = "12-month forecast horizon") +
+  theme_minimal()
+```
+
+```{r}
+#| label: tbl-q3-cv-accuracy-24
+#| tbl-cap: "Time series cross-validation accuracy for the candidate ETS models using a 24-month forecast horizon."
+
+cv_fc_24 <- cv_fit |>
+  forecast(h = 24)
+
+cv_acc_24 <- cv_fc_24 |>
+  accuracy(print_retail_act) |>
+  arrange(RMSE)
+
+cv_acc_24 |>
+  select(.model, .type, RMSE, MAE, MAPE, MASE, RMSSE, ACF1) |>
+  kable(digits = 3)
+```
+
+```{r}
+#| label: fig-q3-rmse-h24
+#| fig-cap: "Cross-validation RMSE by forecast horizon for the candidate ETS models using a 24-month forecast horizon."
+
+cv_fc_24_h <- cv_fc_24 |>
+  group_by(.id, .model) |>
+  mutate(h = row_number()) |>
+  ungroup() |>
+  as_fable(response = "y", distribution = y)
+
+cv_fc_24_h |>
+  accuracy(print_retail_act, by = c("h", ".model")) |>
+  ggplot(aes(x = h, y = RMSE, colour = .model)) +
+  geom_point() +
+  geom_line() +
+  scale_x_continuous(breaks = seq(1, 24, by = 2)) +
+  labs(x = "Forecast horizon", y = "RMSE", 
+       colour = "Model", 
+       title = "Cross-validation RMSE by forecast horizon", 
+       subtitle = "24-month forecast horizon") +
+  theme_minimal()
 ```
 
 \newpage
