@@ -263,5 +263,27 @@ Therefore, ETS(M,N,M) captures the main seasonal structure, but the residual dia
 *Generate forecasts for the two years following the end of your sample using your chosen/best model. Plot them and briefly comment on these. (No more than 100 words). (4 marks)*
 
 ```{r}
+#| label: q5-forecast
 
+fc_ets_mnm <- fit_ets_mnm |>
+  forecast(h = "24 months")
 ```
+
+```{r}
+#| label: fig-q5-ets-mnm-forecast
+#| fig-cap: "Two-year forecasts for ACT newspaper and book retailing using ETS(M,N,M)."
+#| fig-width: 10
+#| fig-height: 10
+
+fc_ets_mnm |>
+  autoplot(print_retail_act, level = c(80, 95)) +
+  labs(
+    title = "Two-year forecasts for newspaper and book retailing",
+    subtitle = "Australian Capital Territory",
+    x = "Month",
+    y = "Turnover (Millions of Dollars)"
+  ) +
+  theme_minimal()
+```
+
+The two-year forecasts continue the pattern supported in Q1–Q4: low turnover, no sustained trend, but clear multiplicative monthly seasonality. Forecasts remain near recent low levels rather than returning to the high-turnover period around 2000–2010, supporting the no-trend ETS(M,N,M) choice and Q3 cross-validation results. The sharp seasonal peaks show monthly effects remain important. The 80% and 95% intervals widen over time, showing increasing uncertainty. Since Q4 showed remaining autocorrelation, the forecast direction and seasonal pattern are useful, but exact values and interval widths may be less reliable.
