@@ -99,7 +99,7 @@ Time series cross-validation was used to compare the candidate ETS models beyond
 
 The 12 month results in @tbl-q3-cv-accuracy-12 show that ETS(M,N,M) has the lowest RMSE, MAE, MAPE, MASE and RMSSE. The pattern in @fig-q3-rmse-h12 is similar, with RMSE increases as the forecast horizon increases, and ETS(M,N,M) remains the lowest error model across most horizons.
 
-The 24 month results in @tbl-q3-cv-accuracy-24 show the same ranking, with ETS(M,N,M) still giving the best overall accuracy. In @fig-q3-rmse-h24, RMSE again increases with the forecast horizon. However, ETS(M,N,M) and ETS(M,Ad,M) become very close at longer horizons, while ETS(M,A,M) has clearly higher RMSE after the early horizons.
+The 24 month results in @tbl-q3-cv-accuracy-24 show the same ranking, with ETS(M,N,M) still giving the best overall accuracy. In @fig-q3-rmse-h24, RMSE again increases with the forecast horizon. However, ETS(M,N,M) and ETS(M,Ad,M) become very close at longer horizons, while ETS(M,A,M) has clearly higher RMSE after the early horizons. This suggests that a damped trend may capture some longer-term movement, but the improvement is not strong enough to outperform the simpler no-trend model. Therefore, ETS(M,N,M) is still preferred because it has slightly better overall accuracy and is simpler.
 
 Overall, the cross-validation results support selecting ETS(M,N,M). It performs best for both 12 month and 24 month horizons, suggesting that multiplicative errors and multiplicative seasonality are useful, but adding an additive or damped trend does not improve forecast accuracy.
 
