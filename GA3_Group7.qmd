@@ -81,7 +81,7 @@ report(auto_fit)
 
 ```{r}
 #| label: fig-q2-components
-#| fig-cap: "Estimated components from the ETS(M,A,M) model."
+#| fig-cap: "Estimated components from the automatically selected ETS(M,N,M) model."
 #| fig-width: 10
 #| fig-height: 10
 
@@ -99,7 +99,9 @@ Time series cross-validation was used to compare the candidate ETS models beyond
 
 The 12-month results in @tbl-q3-cv-accuracy-12 show that ETS(M,N,M) has the lowest RMSE, MAE, MAPE, MASE and RMSSE, although ETS(M,Ad,M) is very close. In @fig-q3-rmse-h12, RMSE increases as the forecast horizon increases. The three models are close at early horizons, but ETS(M,A,M) becomes worse at longer horizons, while ETS(M,N,M) and ETS(M,Ad,M) remain similar.
 
-The 24-month results in @tbl-q3-cv-accuracy-24 show the same ranking, with ETS(M,N,M) still slightly better overall. In @fig-q3-rmse-h24, RMSE again increases with horizon. ETS(M,A,M) moves further away from the other two models, while ETS(M,N,M) and ETS(M,Ad,M) almost overlap for much of the horizon. This suggests that a damped trend gives similar longer-horizon forecasts, but does not clearly improve accuracy.
+The 24-month results in @tbl-q3-cv-accuracy-24 show the same ranking, with ETS(M,N,M) still slightly better overall. In @fig-q3-rmse-h24, RMSE again increases with horizon. ETS(M,A,M) moves further away from the other two models, while ETS(M,N,M) and ETS(M,Ad,M) almost overlap for much of the horizon. 
+
+The close performance of ETS(M,Ad,M) may be because some rolling training windows include the middle part of the series, where the level rises and then begins to flatten or decline. A damped trend can capture this kind of local movement, but the trend is not stable across the whole series, so it does not clearly improve accuracy over ETS(M,N,M).
 
 Overall, the cross-validation results support selecting ETS(M,N,M). It performs slightly best for both horizons, so the simpler no-trend model is preferred over the additive or damped trend alternatives.
 
