@@ -6,8 +6,7 @@ author:
   - Tzu-Hsuan, Yang (35461586)
   - Nutchanok Saitin (35493011)
   - Heng-Hsieh, Chang (35567201)
-format:
-  pdf
+format: pdf
 ---
 
 ```{r}
@@ -34,10 +33,10 @@ dat <- read_csv("GA_data.csv",
                 col_names = colnames(meta),
                 skip = 4)
 
-print_retail_act <- dat %>% 
-  rename(Month = "Student ID", y ="Group 7") %>%
-  select(Month, y) %>% 
-  mutate(Month=yearmonth(Month)) %>% 
+print_retail_act <- dat |>
+  rename(Month = "Student ID", y ="Group 7") |>
+  select(Month, y) |>
+  mutate(Month=yearmonth(Month)) |>
   as_tsibble(index = Month)
 ```
 
@@ -54,7 +53,7 @@ For the tasks that follow you will be modelling the original data without any tr
 #| fig-width: 10
 #| fig-height: 10
 
-print_retail_act %>% 
+print_retail_act |>
   autoplot(y) +
   labs(x = "Month",
        y = "Turnover (Millions of Dollars)", 
@@ -70,10 +69,10 @@ As shown in @fig-q1-timeplot, the ACT newspaper and book retailing series has cl
 *Search for an ETS model for your series using appropriate information criteria. Describe the process you have implemented. Which part of the data is used in this process? Which model have you selected and why? Show all necessary output (10 marks)*
 
 ```{r}
-#| label: tbl-q2-auto-report
+#| label: q2-auto-report
 #| tbl-cap: "Automatically selected ETS model for the Group 7 series."
 
-auto_fit <- print_retail_act %>%
+auto_fit <- print_retail_act |>
   model(auto_ets = ETS(y))
 
 report(auto_fit)
@@ -85,8 +84,8 @@ report(auto_fit)
 #| fig-width: 10
 #| fig-height: 10
 
-auto_fit %>%
-  components() %>%
+auto_fit |>
+  components() |>
   autoplot()
 ```
 
@@ -199,12 +198,10 @@ Overall, the cross-validation results support selecting ETS(M,N,M). It performs 
 *Which model do you prefer for your data? Choose a model and briefly explain your choice. Plot and describe its components and comment on the estimated parameters and how these are appropriate for your data. Perform all the necessary diagnostic checks and comment. (max 400 words) (14 marks)*
 
 ```{r}
-#| label: tbl-q4-ets-mnm-report
+#| label: q4-ets-mnm-report
 
 fit_ets_mnm <- print_retail_act |>
-  model(
-    ETS_MNM = ETS(y ~ error("M") + trend("N") + season("M"))
-  )
+  model(ETS_MNM = ETS(y ~ error("M") + trend("N") + season("M")))
 
 report(fit_ets_mnm)
 ```
@@ -218,10 +215,8 @@ report(fit_ets_mnm)
 fit_ets_mnm |>
   components() |>
   autoplot() +
-  labs(
-    title = "Components of ETS(M,N,M)",
-    subtitle = "Multiplicative error, no trend, and multiplicative seasonality"
-  ) +
+  labs(title = "Components of ETS(M,N,M)",
+    subtitle = "Multiplicative error, no trend, and multiplicative seasonality") +
   theme_minimal()
 ```
 
@@ -245,9 +240,7 @@ ljung_fit <- fit_ets_mnm |>
   features(.innov, ljung_box, lag = 24)
 
 ljung_fit |>
-    kable(
-        caption = "Ljung-Box test results for the ETS(M,N,M) model residuals."
-    )
+    kable(caption = "Ljung-Box test results for the ETS(M,N,M) model residuals.")
 ```
 
 The `ETS(M,N,M)` model is considered the preferred model because it has the lowest AICc among the ETS candidates and was also supported by the time series cross-validation results. This model allows for multiplicative errors and multiplicative seasonality, with no trend component. This is appropriate because the series shows strong seasonal variation, but no stable linear trend over the full sample. 
@@ -282,12 +275,9 @@ fc_ets_mnm <- fit_ets_mnm |>
 
 fc_ets_mnm |>
   autoplot(print_retail_act, level = c(80, 95)) +
-  labs(
-    title = "Two-year forecasts for newspaper and book retailing",
-    subtitle = "Australian Capital Territory",
-    x = "Month",
-    y = "Turnover (Millions of Dollars)"
-  ) +
+  labs(title = "Two-year forecasts for newspaper and book retailing",
+       subtitle = "Australian Capital Territory",
+       x = "Month", y = "Turnover (Millions of Dollars)") +
   theme_minimal()
 ```
 
