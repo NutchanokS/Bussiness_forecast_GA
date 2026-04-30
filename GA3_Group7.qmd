@@ -258,7 +258,7 @@ The estimated smoothing parameters are $\alpha=0.402$ and $\gamma=0.318$. These 
 
 @fig-q4-ets-mnm-residuals show that the innovation residuals mostly fluctuate around zero, but there are clear outliers around 2020 and slightly larger variation near the end of the sample. The ACF plot shows several spikes outside the significance bounds, suggesting that some autocorrelation remains. The residual histogram is centred near zero, although it shows some skewness and extreme values. 
 
-The Ljung-Box test in @tbl-q4-ets-mnm-ljung-box was applied at lag 24. For ETS(M,N,M), there are 14 estimated parameters, including two smoothing parameters. The test gives $p = 2.27×10^{−10}$ < 0.05, so the null hypothesis is rejected, the residuals are not consistent with white noise. 
+The Ljung-Box test in @tbl-q4-ets-mnm-ljung-box was applied at lag 24. For ETS(M,N,M), there are 14 estimated parameters, including two smoothing parameters. The Ljung–Box test gives a p-value below 0.05, so the null hypothesis of no residual autocorrelation is rejected. This means the residuals are not consistent with white noise.
 
 Therefore, ETS(M,N,M) captures the main seasonal structure, but the residual diagnostics indicate some remaining unexplained dependence.
 
