@@ -61,7 +61,12 @@ print_retail_act |>
        subtitle = "Australian Capital Territory")
 ```
 
-As shown in @fig-q1-timeplot, the ACT newspaper and book retailing series has clear monthly fluctuations and a changing overall level. The series rises in the earlier years, stays relatively high around the middle of the sample, and then falls strongly in the later years. Because the direction of the series changes over time, we do not think an additive or damped trend is suitable. The size of the seasonal fluctuations and the random variation also seem larger when turnover is high, and smaller when turnover is low. This means the errors are more likely to be proportional to the level, so a multiplicative error structure is reasonable. Therefore, we choose ETS(M,N,M), which allows multiplicative errors and seasonality without forcing a fixed trend.
+As shown in @fig-q1-timeplot, the ACT newspaper and book retailing series exhibits clear monthly seasonality and a changing level over time. The series rises in the earlier years, remains relatively high around 2010, and then declines strongly in the later years, indicating a non-monotonic pattern with reversals in direction.
+
+Because additive or damped trend models assume a consistent trend direction, and damped trends only reduce the magnitude rather than reverse it, they are not suitable for capturing this pattern. In addition, the magnitude of both the seasonal fluctuations and the random variation increases with the level of the series, suggesting that the variance is proportional to the level. As no data transformation is permitted, a multiplicative error and multiplicative seasonality structure is required. 
+
+Therefore, an **ETS(M, N, M)** model is selected. The multiplicative error component captures the proportional nature of the random variation, the no-trend specification avoids imposing a potentially misleading long-term trend, and the multiplicative seasonality accounts for seasonal effects whose amplitude increases with the level.
+
 
 \newpage
 ## Question 2
@@ -89,7 +94,9 @@ auto_fit |>
   autoplot()
 ```
 
-The `ETS()` function considers the admissible ETS models and selects the model with the lowest AICc, balancing goodness of fit and model complexity. The automatic search selected ETS(M,N,M), which is consistent with our choice in Question 1. The whole available time series was used in this process, because this question focuses on information criteria rather than out-of-sample evaluation. The output from `report()` shows that the selected model has multiplicative errors, no trend and multiplicative seasonality. The reported information criteria are $AIC = 2744.476$, $AICc = 2745.478$ and $BIC = 2807.544$. This supports our visual choice, because both the time plot and the AICc-based search suggest proportional errors and seasonal variation, but no stable long-term trend.
+The `ETS()` function was used to automatically search for the best ETS model by fitting all admissible combinations of error, trend, and seasonal components and selecting the one with the lowest AICc, balancing goodness of fit and model complexity. The automatic search selected ETS(M,N,M), which is consistent with our choice in Question 1. The entire available time series (1982–2023) was used in this process, because this question focuses on information criteria rather than out-of-sample evaluation. 
+
+The output from `report()` shows that the selected model has multiplicative errors, no trend and multiplicative seasonality. The reported information criteria are $AIC = 2744.476$, $AICc = 2745.478$ and $BIC = 2807.544$. This supports our visual choice, because both the time plot and the AICc-based search suggest proportional errors and seasonal variation, but no stable long-term trend.
 
 \newpage
 ## Question 3
@@ -182,7 +189,11 @@ cv_fc_24_h |>
   theme_minimal()
 ```
 
-Time series cross-validation was used to compare the candidate ETS models beyond one-step-ahead forecasts. We used 12-month and 24-month forecast horizons, representing one and two full seasonal cycles. For both horizons, `.init = 180` was used, giving 15 years of initial monthly data, enough to estimate the monthly seasonal pattern. In both cases, `.step = 1` was used so every possible monthly forecast origin after the initial training period was used.
+**Time Series Cross-Validation Process:** 
+
+Time series cross-validation was used to compare the candidate ETS models beyond one-step-ahead forecasts. We used 12-month and 24-month forecast horizons, representing one and two full seasonal cycles. These horizons were chosen because they are practically relevant for retail planning. For both horizons, `.init = 180` was used, giving 15 years of initial monthly data, enough to estimate the monthly seasonal pattern. In both cases, `.step = 1` was used so every possible monthly forecast origin after the initial training period was used.
+
+**Results:** 
 
 The 12-month results in @tbl-q3-cv-accuracy-12 show that ETS(M,N,M) has the lowest RMSE, MAE, MAPE, MASE and RMSSE, although ETS(M,Ad,M) is very close. In @fig-q3-rmse-h12, RMSE increases as the forecast horizon increases. The three models are close at early horizons, but ETS(M,A,M) becomes worse at longer horizons, while ETS(M,N,M) and ETS(M,Ad,M) remain similar.
 
@@ -190,7 +201,9 @@ The 24-month results in @tbl-q3-cv-accuracy-24 show the same ranking, with ETS(M
 
 The close performance of ETS(M,Ad,M) may be because some rolling training windows include the middle part of the series, where the level rises and then begins to flatten or decline. A damped trend can capture this kind of local movement, but the trend is not stable across the whole series, so it does not clearly improve accuracy over ETS(M,N,M).
 
-Overall, the cross-validation results support selecting ETS(M,N,M). It performs slightly best for both horizons, so the simpler no-trend model is preferred over the additive or damped trend alternatives.
+**Conclusion:** 
+
+The cross-validation results support ETS(M,N,M) as the preferred model. It performs slightly the best forecast accuracy across both horizons, so the simpler no-trend model is preferred over the additive or damped trend alternatives.
 
 \newpage
 ## Question 4
@@ -240,7 +253,8 @@ ljung_fit <- fit_ets_mnm |>
   features(.innov, ljung_box, lag = 24)
 
 ljung_fit |>
-    kable(caption = "Ljung-Box test results for the ETS(M,N,M) model residuals.")
+  mutate(lb_pvalue = format(lb_pvalue, scientific = TRUE, digits = 6)) |>
+  kable(caption = "Ljung-Box test results for the ETS(M,N,M) model residuals.")
 ```
 
 The `ETS(M,N,M)` model is considered the preferred model because it has the lowest AICc among the ETS candidates and was also supported by the time series cross-validation results. This model allows for multiplicative errors and multiplicative seasonality, with no trend component. This is appropriate because the series shows strong seasonal variation, but no stable linear trend over the full sample. 
@@ -248,12 +262,11 @@ The `ETS(M,N,M)` model is considered the preferred model because it has the lowe
 The estimated smoothing parameters are $\alpha=0.402$ and $\gamma=0.318$. These values suggest that both the level and seasonal components are updated moderately as new observations become available. The absence of a trend smoothing parameter is consistent with the `ETS(M,N,M)` specification. 
 
 @fig-q4-ets-mnm-components supports this model choice. The level component changes over time but does not follow a stable linear upward or downward trend, supporting the no-trend specification. The seasonal component shows a strong pattern, which supports the use of multiplicative seasonality. The seasonal fluctuations are consistently present across the sample with varying sizes, especially around the end of the series. The remainder is mostly centred around zero, but some large movements remain, especially around 2020. 
+@fig-q4-ets-mnm-residuals shows that the innovation residuals mostly fluctuate around zero, but there are clear outliers around 2020 and slightly larger variation near the end of the sample. The ACF plot shows several spikes outside the significance bounds, suggesting that some autocorrelation remains. The residual histogram is centred near zero, although it shows some right skewness and extreme values. 
 
-@fig-q4-ets-mnm-residuals show that the innovation residuals mostly fluctuate around zero, but there are clear outliers around 2020 and slightly larger variation near the end of the sample. The ACF plot shows several spikes outside the significance bounds, suggesting that some autocorrelation remains. The residual histogram is centred near zero, although it shows some skewness and extreme values. 
+The Ljung-Box test in @tbl-q4-ets-mnm-ljung-box was applied at lag 24. For ETS(M,N,M), there are 14 estimated parameters, including two smoothing parameters. The Ljung–Box test gives a p-value below 0.05, so the null hypothesis of no residual autocorrelation is rejected. This means the residuals are not consistent with white noise. 
 
-The Ljung-Box test in @tbl-q4-ets-mnm-ljung-box was applied at lag 24. For ETS(M,N,M), there are 14 estimated parameters, including two smoothing parameters. The Ljung–Box test gives a p-value below 0.05, so the null hypothesis of no residual autocorrelation is rejected. This means the residuals are not consistent with white noise.
-
-Therefore, ETS(M,N,M) captures the main seasonal structure, but the residual diagnostics indicate some remaining unexplained dependence.
+Therefore, ETS(M,N,M) adequately captures the main seasonal structure, but the residual diagnostics indicate some mild remaining unexplained dependence.
 
 \newpage
 ## Question 5
@@ -281,4 +294,4 @@ fc_ets_mnm |>
   theme_minimal()
 ```
 
-The two-year forecasts continue the pattern supported in Q1–Q4: low turnover, no sustained trend, but clear multiplicative monthly seasonality. Forecasts remain near recent low levels rather than returning to the high-turnover period around 2000–2010, supporting the no-trend ETS(M,N,M) choice and Q3 cross-validation results. The sharp seasonal peaks show monthly effects remain important. The 80% and 95% intervals widen over time, showing increasing uncertainty. Since Q4 showed remaining autocorrelation, the forecast direction and seasonal pattern are useful, but exact values and interval widths may be less reliable.
+The two-year forecasts generated from the ETS(M,N,M) model continue the pattern supported in Q1–Q4: low turnover, no sustained trend, but clear multiplicative monthly seasonality. The point forecasts remain near recent low levels rather than returning to the high-turnover period around 2000–2010, supporting the no-trend `ETS(M,N,M)` choice and Q3 cross-validation results. The sharp seasonal peaks indicate monthly effects remain important. The 80% and 95% prediction intervals widen with the forecast horizon, reflecting increasing uncertainty. Although some residual autocorrelation was detected in Question 4, the forecast direction and seasonal pattern are useful, but exact values and interval widths may be less reliable.
