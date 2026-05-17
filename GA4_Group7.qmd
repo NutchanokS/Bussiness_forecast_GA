@@ -11,6 +11,7 @@ format: pdf
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, eval=TRUE, error=TRUE, cache=TRUE)
+# write the appropriate code to read in your group data from Group_Data.csv
 
 library(fpp3)
 library(readr)
