@@ -458,8 +458,3 @@ The prediction intervals widen as the forecast horizon increases, reflecting gre
 ```{r}
 
 ```
-
-## Reference
-
-ACT Government. (2022, September 30). Changes to ACT Government COVID-19 public health response [Media release]. Chief Minister, Treasury and Economic Development Directorate.
-<https://www.cmtedd.act.gov.au/open_government/inform/act_government_media_releases/barr/2022/changes-to-act-government-covid-19-public-health-response>
