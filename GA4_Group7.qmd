@@ -10,7 +10,7 @@ format: pdf
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, eval=TRUE, error=TRUE, cache=TRUE)
+knitr::opts_chunk$set(echo = TRUE, eval=TRUE, error=TRUE, cache=TRUE, warning = FALSE)
 # write the appropriate code to read in your group data from Group_Data.csv
 
 library(fpp3)
@@ -21,22 +21,6 @@ library(patchwork)
 library(knitr)
 library(kableExtra)
 library(readxl)
-```
-
-```{r}
-#| include: false
-
-meta <- read_csv("GA_data.csv", col_names = TRUE, n_max = 3)
-
-dat <- read_csv("GA_data.csv", 
-                col_names = colnames(meta),
-                skip = 4)
-
-print_retail_act <- dat |>
-  rename(Month = "Student ID", y ="Group 7") |>
-  select(Month, y) |>
-  mutate(Month=yearmonth(Month)) |>
-  as_tsibble(index = Month)
 ```
 
 ## Question 1
@@ -57,16 +41,16 @@ print_retail_act <- extended_dat |>
 
 ```{r}
 #| label: fig-extended-series
-#| fig-width: 12
-#| fig-height: 4
-#| fig-cap: "Updated turnover series from Apr 1982 to Jun 2025. The shaded area highlights March 2020 to June 2022, when ABS did not publish trend estimates due to COVID-related disruption and volatility. The left plot shows the whole series, while the right plot zooms in from Jan 2018 to show recent movements."
+#| fig-width: 10
+#| fig-height: 8
+#| fig-cap: "Updated turnover series from Apr 1982 to Jun 2025. The shaded area highlights March 2020 to Sep 2022, when ABS did not publish trend estimates due to COVID-related disruption and volatility. The left plot shows the whole series, while the right plot zooms in from Jan 2018 to show recent movements."
 
 plot_whole_series <- print_retail_act |>
   autoplot(y) +
   annotate(
     "rect",
     xmin = yearmonth("2020 Mar"),
-    xmax = yearmonth("2022 Jun"),
+    xmax = yearmonth("2022 Sep"),
     ymin = -Inf,
     ymax = Inf,
     alpha = 0.2,
@@ -84,7 +68,7 @@ plot_zoomed <- print_retail_act |>
   annotate(
     "rect",
     xmin = yearmonth("2020 Mar"),
-    xmax = yearmonth("2022 Jun"),
+    xmax = yearmonth("2022 Sep"),
     ymin = -Inf,
     ymax = Inf,
     alpha = 0.2,
@@ -96,7 +80,7 @@ plot_zoomed <- print_retail_act |>
   ) +
     theme_minimal()
 
-(plot_whole_series | plot_zoomed) +
+(plot_whole_series / plot_zoomed) +
   plot_annotation(
     title = "Turnover Series with COVID-19 Period Highlighted",
     subtitle = "Newspaper and book retailing, Australian Capital Territory"
@@ -107,7 +91,7 @@ plot_zoomed <- print_retail_act |>
 
 ```{r}
 #| label: fig-season-plot
-#| fig-height: 6
+#| fig-height: 4
 
 print_retail_act |>
   filter(Month >= yearmonth("2018 Jan")) |>
@@ -128,9 +112,310 @@ print_retail_act |>
 
 *Identify the best possible ARIMA model for your data and generate forecasts. Present a complete analysis and justifications for each step you take. There is no word limit here. No more hints will be provided - we leave it up to you to provide a full analysis. Treat this as a consulting job for a client wanting some ARIMA forecasts (20 marks)*
 
-```{r}
+### Transformation
 
+```{r}
+#| label: tbl-q2-lambda
+#| tbl-cap: "Guerrero lambda for the updated series."
+
+lambda_tbl <- print_retail_act |>
+  features(y, guerrero)
+
+lambda <- lambda_tbl$lambda_guerrero
+
+lambda_tbl |>
+  mutate(lambda_guerrero) |>
+  rename(`Guerrero lambda` = lambda_guerrero) |>
+  kable(digits = 3)
 ```
+
+```{r}
+#| label: fig-q2-transformations
+#| fig-cap: "Comparison of transformations for the updated turnover series."
+#| fig-width: 10
+#| fig-height: 16
+
+p1 <- print_retail_act |>
+  autoplot(y) +
+  labs(title = "Original", x = "Month", y = "Turnover")
+
+p2 <- print_retail_act |>
+  autoplot(sqrt(y)) +
+  labs(title = "Square-root", x = "Month", y = "sqrt(Turnover)")
+
+p3 <- print_retail_act |>
+  autoplot(log(y)) +
+  labs(title = "Log", x = "Month", y = "log(Turnover)")
+
+p4 <- print_retail_act |>
+  autoplot(box_cox(y, lambda)) +
+  labs(title = "Box-Cox using Guerrero lambda",
+       x = "Month", y = "Box-Cox(Turnover)")
+
+(p1 / p2 / p3 / p4)
+```
+
+@fig-q2-transformations compares the original, square-root, log and Box-Cox transformations. The original series has changing variation over time, so a transformation is needed to stabilise the variance before ARIMA modelling. Guerrero's lambda is around 0.424, meaning log is too strong and the original scale is not stable enough. Square-root is a reasonable approximation, but Box-Cox uses the estimated lambda directly, so I use `box_cox(y, lambda)`.
+
+```{r}
+#| label: fig-q2-boxcox
+#| fig-cap: "Box-Cox transformed turnover series."
+#| fig-width: 10
+#| fig-height: 4
+
+print_retail_act |>
+  autoplot(box_cox(y, lambda)) +
+  labs(title = "Box-Cox transformed turnover series",
+       x = "Month",
+       y = "Box-Cox(Turnover)")
+```
+
+### Differencing and stationarity
+
+@fig-q2-boxcox still shows a long-run downward movement and regular monthly seasonality. Therefore, differencing is needed before selecting ARIMA orders.
+
+```{r}
+#| label: fig-q2-seasonal-difference
+#| fig-cap: "Seasonally differenced Box-Cox transformed turnover series."
+#| fig-width: 10
+#| fig-height: 4
+
+print_retail_act |>
+  autoplot(difference(box_cox(y, lambda), 12)) +
+  labs(title = "Seasonally differenced Box-Cox transformed turnover",
+       x = "Month",
+       y = "Seasonal difference of Box-Cox(Turnover)")
+```
+
+@fig-q2-seasonal-difference shows that seasonal differencing removes much of the repeated monthly pattern, but the series still has long swings above and below zero. This suggests that the transformed series may not yet be fully stationary, so I check whether an additional first difference is needed.
+
+```{r}
+#| label: fig-q2-seasonal-first-difference
+#| fig-cap: "Seasonally and first differenced Box-Cox transformed turnover series."
+#| fig-width: 10
+#| fig-height: 4
+
+print_retail_act |>
+  autoplot(difference(box_cox(y, lambda), 12) |> difference()) +
+  labs(title = "Seasonally and first differenced Box-Cox transformed turnover",
+       x = "Month",
+       y = "Differenced Box-Cox(Turnover)")
+```
+
+@fig-q2-seasonal-first-difference shows that after applying both seasonal and ordinary differencing, the series fluctuates more closely around zero with no clear remaining trend or seasonal pattern. Although some temporary shocks remain, this looks more stationary than using seasonal differencing alone. I therefore use one seasonal difference and one first difference, so $D = 1$, $d = 1$, and $m = 12$.
+
+```{r}
+#| label: tbl-q2-difference-tests
+#| tbl-cap: "Unit root checks used as supporting evidence for differencing."
+
+seasonal_diff_tbl <- print_retail_act |>
+  features(box_cox(y, lambda), unitroot_nsdiffs)
+
+first_diff_tbl <- print_retail_act |>
+  features(difference(box_cox(y, lambda), 12), unitroot_ndiffs)
+
+bind_cols(seasonal_diff_tbl, first_diff_tbl) |>
+  kable()
+```
+
+@tbl-q2-difference-tests also supports this choice, suggesting one seasonal difference and one ordinary difference.
+
+### ARIMA model selection and diagnostics
+
+```{r}
+#| label: fig-q2-acf-pacf
+#| fig-cap: "ACF and PACF of the stationary transformed series."
+#| fig-width: 10
+#| fig-height: 8
+
+print_retail_act |>
+  gg_tsdisplay(difference(box_cox(y, lambda), 12) |> difference(),
+               plot_type = "partial",
+               lag_max = 60) +
+  labs(title = "Stationary transformed series after seasonal and first differencing")
+```
+
+@fig-q2-acf-pacf shows the ACF and PACF after the Box-Cox transformation, seasonal differencing and first differencing. The ACF has a strong spike at lag 1 and at the seasonal lag 12, suggesting non-seasonal MA(1) and seasonal MA(1). The PACF also shows early spikes up to about lag 2, so AR(2) is a plausible alternative. I therefore use ARIMA(0,1,1)(0,1,1)$_{12}$ as the initial model and compare it with plausible alternatives using AICc.
+
+```{r}
+#| label: q2-fit-arima-candidates
+
+q2_arima_candidates <- print_retail_act |>
+  model(
+    arima011011 = ARIMA(box_cox(y, lambda) ~ pdq(0,1,1) + PDQ(0,1,1)),
+    arima210011 = ARIMA(box_cox(y, lambda) ~ pdq(2,1,0) + PDQ(0,1,1)),
+    arima011110 = ARIMA(box_cox(y, lambda) ~ pdq(0,1,1) + PDQ(1,1,0)),
+    arima011210 = ARIMA(box_cox(y, lambda) ~ pdq(0,1,1) + PDQ(2,1,0)),
+    arima011310 = ARIMA(box_cox(y, lambda) ~ pdq(0,1,1) + PDQ(3,1,0)),
+    arima210110 = ARIMA(box_cox(y, lambda) ~ pdq(2,1,0) + PDQ(1,1,0)),
+    arima210210 = ARIMA(box_cox(y, lambda) ~ pdq(2,1,0) + PDQ(2,1,0)),
+    arima210310 = ARIMA(box_cox(y, lambda) ~ pdq(2,1,0) + PDQ(3,1,0))
+  )
+```
+
+```{r}
+#| label: tbl-q2-arima-ic
+#| tbl-cap: "Information criteria for candidate ARIMA models."
+
+q2_arima_candidates |>
+  glance() |>
+  arrange(AICc) |>
+  select(.model, sigma2, log_lik, AIC, AICc, BIC) |>
+  mutate(across(where(is.numeric), ~ round(.x, 3))) |>
+  kable()
+```
+
+Based on @tbl-q2-arima-ic, ARIMA(0,1,1)(0,1,1)$_{12}$ has the lowest AICc, so it is the best candidate model among those considered. The next closest model is ARIMA(2,1,0)(0,1,1)$_{12}$, but its AICc is slightly higher. Both best-performing models include seasonal MA(1), while the models using seasonal AR terms have much higher AICc values. This suggests that the seasonal MA(1) structure is more appropriate than the seasonal AR alternatives. 
+
+I therefore treat ARIMA(0,1,1)(0,1,1)$_{12}$ as the best manual candidate model and check its residual diagnostics before making the final model decision.
+
+```{r}
+#| label: q2-manual-arima
+
+q2_manual_arima <- q2_arima_candidates |>
+  select(arima011011)
+
+q2_manual_arima |>
+  report()
+```
+
+The estimated MA coefficient is -0.3249 and the seasonal MA coefficient is -0.6100. Both are negative, suggesting that recent non-seasonal and seasonal shocks are partly corrected in the following periods. This model is simple and is also consistent with the ACF pattern in @fig-q2-acf-pacf.
+
+```{r}
+#| label: fig-q2-manual-residuals
+#| fig-cap: "Residual diagnostics for the manual ARIMA(0,1,1)(0,1,1)[12] candidate model."
+#| fig-width: 10
+#| fig-height: 8
+
+q2_manual_arima |>
+  gg_tsresiduals(lag = 48)
+```
+
+@fig-q2-manual-residuals shows that the residual time plot has no obvious remaining trend or seasonal pattern. The histogram is roughly symmetric and reasonably bell-shaped, although not perfectly normal. The residual ACF still has some significant spikes, so the residuals are not completely clean visually. Therefore, I use the Ljung–Box test as a formal check for remaining autocorrelation.
+
+```{r}
+#| label: tbl-q2-manual-ljung
+#| tbl-cap: "Ljung-Box test for residual whiteness of the manual ARIMA candidate model."
+
+q2_manual_arima |>
+  augment() |>
+  features(.innov, ljung_box, lag = 24, dof = 2) |>
+  kable(digits = 3)
+```
+
+For @tbl-q2-manual-ljung, I use lag 24 and dof 2, from one non-seasonal MA term and one seasonal MA term. The null hypothesis is $H_0: \rho_1 = \cdots = \rho_{24} = 0$ jointly, meaning the residual autocorrelations up to lag 24 are jointly insignificant. Since $p = 0.001 < 0.05$, I reject $H_0$ at the 5% level. This suggests that the residuals are not white noise and that some autocorrelation remains. Therefore, I review the model rather than using this candidate model directly as the final forecasting model.
+
+```{r}
+#| label: q2-auto-arima
+
+q2_auto_arima <- print_retail_act |>
+  model(auto_arima = ARIMA(box_cox(y, lambda),
+                           stepwise = FALSE,
+                           approximation = FALSE))
+
+q2_auto_arima |>
+  report()
+```
+
+The manual candidate model failed the Ljung–Box test, so I use a full automatic ARIMA search with `stepwise = FALSE` and `approximation = FALSE`. The automatic search selects ARIMA(3,1,1)(1,1,1)$_{12}$ with the same Box-Cox transformation. It also uses $d = 1$ and $D = 1$, which agrees with the earlier differencing decision.
+
+```{r}
+#| label: tbl-q2-manual-auto-comparison
+#| tbl-cap: "Information criteria comparison between the manual candidate ARIMA model and the automatic ARIMA model."
+
+q2_compare_arima <- print_retail_act |>
+  model(manual_arima = ARIMA(box_cox(y, lambda) ~ pdq(0,1,1) + PDQ(0,1,1)),
+        auto_arima = ARIMA(box_cox(y, lambda),
+                           stepwise = FALSE,
+                           approximation = FALSE))
+
+q2_compare_arima |>
+  glance() |>
+  arrange(AICc) |>
+  select(.model, sigma2, log_lik, AIC, AICc, BIC) |>
+  mutate(across(where(is.numeric), ~ round(.x, 3))) |>
+  kable()
+```
+
+@tbl-q2-manual-auto-comparison shows that the automatic ARIMA model has a lower AICc than the manual candidate model. Since both models use the same Box-Cox transformation and differencing orders, the AICc comparison is appropriate. The automatic model therefore appears better, but I still check its residual diagnostics before using it for forecasting.
+
+```{r}
+#| label: fig-q2-auto-residuals
+#| fig-cap: "Residual diagnostics for the automatic ARIMA(3,1,1)(1,1,1)[12] model."
+#| fig-width: 10
+#| fig-height: 8
+
+q2_auto_arima |>
+  gg_tsresiduals(lag = 48)
+```
+
+@fig-q2-auto-residuals shows the residual diagnostics for the automatic ARIMA(3,1,1)(1,1,1)$_{12}$ model. The residual time plot has no obvious trend or seasonal pattern, and the histogram is roughly symmetric and reasonably bell-shaped. However, the residual ACF still has a few significant spikes, so I use the Ljung–Box test as a formal check for remaining autocorrelation.
+
+```{r}
+#| label: tbl-q2-auto-ljung
+#| tbl-cap: "Ljung-Box test for residual whiteness of the automatic ARIMA model."
+
+q2_auto_arima |>
+  augment() |>
+  features(.innov, ljung_box, lag = 24, dof = 6) |>
+  kable(digits = 3)
+```
+
+For @tbl-q2-auto-ljung, I use lag 24 and dof 6, from three non-seasonal AR terms, one non-seasonal MA term, one seasonal AR term and one seasonal MA term. The null hypothesis is $H_0: \rho_1 = \cdots = \rho_{24} = 0$ jointly. Since $p = 0.001 < 0.05$, I reject $H_0$ at the 5% level. This suggests that some residual autocorrelation remains, so the automatic model is not perfect.
+
+**Final Decision**
+
+The manual model is simpler, but I select the automatic ARIMA(3,1,1)(1,1,1)$_{12}$ model because it has the lower AICc. This is important because AICc already penalises the extra parameters, so the lower AICc suggests that the additional terms improve the fit. However, the Ljung–Box test still rejects white noise, so the model is not perfect and the forecasts should be interpreted cautiously.
+
+### Forecasts from the final ARIMA model
+
+```{r}
+#| label: q2-final-forecast
+
+q2_final_arima <- q2_auto_arima
+
+q2_arima_fc <- q2_final_arima |>
+  forecast(h = "24 months")
+
+forecast_start <- max(print_retail_act$Month) + 1
+```
+
+```{r}
+#| label: fig-q2-arima-forecast-full
+#| fig-cap: "Twenty-four month forecasts from the final ARIMA model over the full updated series."
+#| fig-width: 10
+#| fig-height: 5
+
+q2_arima_fc |>
+  autoplot(print_retail_act, level = c(80, 95)) +
+  labs(title = "Twenty-four month ARIMA forecast",
+       subtitle = "Final model: ARIMA(3,1,1)(1,1,1)[12] with Box-Cox transformation",
+       x = "Month",
+       y = "Turnover (Millions of Dollars)")
+```
+
+@fig-q2-arima-forecast-full shows the 24-month forecasts from the final ARIMA(3,1,1)(1,1,1)$_{12}$ model in the context of the full series. The forecasts look reasonable because they continue the recent lower-turnover period, which is consistent with the long-run downward movement seen in the later part of the series.
+
+```{r}
+#| label: fig-q2-arima-forecast-zoom
+#| fig-cap: "Zoomed twenty-four month forecasts from the final ARIMA model."
+#| fig-width: 10
+#| fig-height: 5
+
+q2_arima_fc |>
+  autoplot(print_retail_act |> filter(year(Month) >= 2018),
+           level = c(80, 95)) +
+  geom_vline(xintercept = forecast_start,
+             linetype = "dashed") +
+  labs(title = "Zoomed twenty-four month ARIMA forecast",
+       subtitle = "Dashed line marks the start of the forecast period",
+       x = "Month",
+       y = "Turnover (Millions of Dollars)")
+```
+
+@fig-q2-arima-forecast-zoom gives a clearer view of the recent data and forecast horizon. The point forecasts continue from the latest observed level and retain strong monthly seasonality, with expected seasonal peaks and troughs.
+
+The prediction intervals widen as the forecast horizon increases, reflecting greater uncertainty further into the future. Since the final ARIMA model still failed the Ljung–Box test, the forecasts should be interpreted cautiously. The model is the best ARIMA choice among those considered based on AICc, but the remaining residual autocorrelation suggests that the forecast intervals may not fully capture all uncertainty.
 
 \newpage
 ## Question 3
@@ -173,3 +458,8 @@ print_retail_act |>
 ```{r}
 
 ```
+
+## Reference
+
+ACT Government. (2022, September 30). Changes to ACT Government COVID-19 public health response [Media release]. Chief Minister, Treasury and Economic Development Directorate.
+<https://www.cmtedd.act.gov.au/open_government/inform/act_government_media_releases/barr/2022/changes-to-act-government-covid-19-public-health-response>
