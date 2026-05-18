@@ -48,7 +48,7 @@ print_retail_act <- dat |>
 
 extended_dat <- read_excel("GA4_data.xlsx", sheet = "Data1", skip = 9) 
 
-extended_series <- extended_dat |>
+print_retail_act <- extended_dat |>
   rename(Month = "Series ID", y = "A3349773T") |>
   select(Month, y) |>
   mutate(Month = yearmonth(Month)) |>
@@ -61,7 +61,7 @@ extended_series <- extended_dat |>
 #| fig-height: 4
 #| fig-cap: "Updated turnover series from Apr 1982 to Jun 2025. The shaded area highlights March 2020 to June 2022, when ABS did not publish trend estimates due to COVID-related disruption and volatility. The left plot shows the whole series, while the right plot zooms in from Jan 2018 to show recent movements."
 
-plot_whole_series <- extended_series |>
+plot_whole_series <- print_retail_act |>
   autoplot(y) +
   annotate(
     "rect",
@@ -78,7 +78,7 @@ plot_whole_series <- extended_series |>
   ) +
     theme_minimal()
 
-plot_zoomed <- extended_series |>
+plot_zoomed <- print_retail_act |>
   filter(Month >= yearmonth("2018 Jan")) |>
   autoplot(y) +
   annotate(
@@ -109,7 +109,7 @@ plot_zoomed <- extended_series |>
 #| label: fig-season-plot
 #| fig-height: 6
 
-extended_series |>
+print_retail_act |>
   filter(Month >= yearmonth("2018 Jan")) |>
   gg_season(y, labels = "both") +
   labs(
