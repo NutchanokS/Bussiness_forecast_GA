@@ -20,6 +20,7 @@ library(ggplot2)
 library(patchwork)
 library(knitr)
 library(kableExtra)
+library(readxl)
 ```
 
 ```{r}
@@ -43,7 +44,63 @@ print_retail_act <- dat |>
 *Update your data from the ABS website and plot it. Do you see a COVID-19 effect? (3 marks)*
 
 ```{r}
+#| label: update-dataprep
 
+extended_dat <- read_excel("GA4_data.xlsx", sheet = "Data1", skip = 9) 
+
+extended_series <- extended_dat |>
+  rename(Month = "Series ID", y = "A3349773T") |>
+  select(Month, y) |>
+  mutate(Month = yearmonth(Month)) |>
+  as_tsibble(index = Month)
+```
+
+```{r}
+#| label: fig-extended-series
+#| fig-width: 12
+#| fig-height: 4
+#| fig-cap: "Updated turnover series from Apr 1982 to Jun 2025. The shaded area highlights March 2020 to June 2022, when ABS did not publish trend estimates due to COVID-related disruption and volatility. The left plot shows the whole series, while the right plot zooms in from Jan 2018 to show recent movements."
+
+plot_whole_series <- extended_series |>
+  autoplot(y) +
+  annotate(
+    "rect",
+    xmin = yearmonth("2020 Mar"),
+    xmax = yearmonth("2022 Jun"),
+    ymin = -Inf,
+    ymax = Inf,
+    alpha = 0.2,
+    fill = "grey30"
+  ) +
+  labs(
+    x = "Month",
+    y = "Turnover (Millions of Dollars)"
+  ) +
+    theme_minimal()
+
+plot_zoomed <- extended_series |>
+  filter(Month >= yearmonth("2018 Jan")) |>
+  autoplot(y) +
+  annotate(
+    "rect",
+    xmin = yearmonth("2020 Mar"),
+    xmax = yearmonth("2022 Jun"),
+    ymin = -Inf,
+    ymax = Inf,
+    alpha = 0.2,
+    fill = "grey30"
+  ) +
+  labs(
+    x = "Month",
+    y = "Turnover (Millions of Dollars)"
+  ) +
+    theme_minimal()
+
+(plot_whole_series | plot_zoomed) +
+  plot_annotation(
+    title = "Updated Turnover Series with COVID-19 Period Highlighted",
+    subtitle = "Pharmaceutical, Cosmetic and Toiletry Goods Retailing, South Australia"
+  )
 ```
 
 \newpage
