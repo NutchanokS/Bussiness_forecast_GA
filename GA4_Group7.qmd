@@ -98,10 +98,30 @@ plot_zoomed <- extended_series |>
 
 (plot_whole_series | plot_zoomed) +
   plot_annotation(
-    title = "Updated Turnover Series with COVID-19 Period Highlighted",
-    subtitle = "Pharmaceutical, Cosmetic and Toiletry Goods Retailing, South Australia"
+    title = "Turnover Series with COVID-19 Period Highlighted",
+    subtitle = "Newspaper and book retailing, Australian Capital Territory"
   )
 ```
+
+@fig-extended-series shows a long-term decline in turnover before COVID-19. During the COVID-disruption period, turnover remained low and volatile, with some sharp temporary movements, including the lowest point in the series. After the COVID-disruption period, turnover shows a slight recovery, but remains at a relatively low level, with the seasonal pattern still visible.
+
+```{r}
+#| label: fig-season-plot
+#| fig-height: 6
+
+extended_series |>
+  filter(Month >= yearmonth("2018 Jan")) |>
+  gg_season(y, labels = "both") +
+  labs(
+    title = "Turnover (Jan 2018 - Jun 2025)",
+    subtitle = "Newspaper and book retailing, Australian Capital Territory",
+    x = "Month",
+    y = "Turnover (Millions of Dollars)"
+  ) +
+    theme_minimal()
+```
+
+@fig-season-plot shows that turnover generally declined over time while retaining a consistent seasonal pattern, with higher values toward the end of the year, especially in December. During the COVID-disruption period, the 2021 line falls sharply from July to October and reaches the lowest point in September, suggesting a strong temporary weakening. After the COVID-disruption period, turnover increases slightly in some months, but remains relatively low compared with 2018–2020.
 
 \newpage
 ## Question 2
