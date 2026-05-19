@@ -25,8 +25,7 @@ library(readxl)
 
 ## Question 1
 
-*Update your data from the ABS website and plot it. Do you see a COVID-19 effect? (3 marks)*
-
+*Update your data from the ABS website and plot it. Do you see a COVID-19 effect? (3 marks)*。
 ```{r}
 #| label: update-dataprep
 
@@ -422,9 +421,56 @@ The prediction intervals widen as the forecast horizon increases, reflecting gre
 
 *On the same graph, plot the updated data together with forecasts from all the 'best' alternative methods/models you have studied throughout the semester. Generate as many steps ahead forecasts required to cover the new data. Think about visualisation. Visually inspect these and comment on any similarities, differences, anomalies you may observe. (No more than 100 words). (12 marks)*
 
+To fairly compare the three best models identified in GA2–GA4, we refit each on training data up to June 2023 and generate 24-month-ahead forecasts to cover the newly added period (July 2023 – June 2025).
+
+- `STL_NAIVE` selected fromm GA2
+- `ETS(M,N,M)` selected from GA3
+- `ARIMA (3,1,1)(1,1,1)$_{12}$` selected from Q2
+
 ```{r}
 
+# Training set = data available at the time of GA2/GA3 (up to 2023 Jun)
+train_data <- print_retail_act |> 
+  filter(Month <= yearmonth("2023 Jun"))
+
+# Refit the three "best" models identified in GA2/GA3/GA4 on the *training* data
+lambda_train <- 0.403   
+
+fit_all <- train_data |> 
+  model(
+    `Benchmark (SNAIVE)` = SNAIVE(y),
+    `Regression (TSLM)`  = TSLM(y ~ trend() + season()),
+    `STL Decomposition`  = decomposition_model(STL(box_cox(y, lambda_train)), NAIVE(season_adjust)),
+    `Best ETS (M,N,M)`   = ETS(y ~ error("M") + trend("N") + season("M")),
+    `Best ARIMA`         = ARIMA(box_cox(y, lambda_train) ~ pdq(3,1,1) + PDQ(1,1,1))
+  )
+
+fc_all <- fit_all |> 
+  forecast(h = "24 months")
 ```
+
+```{r}
+#| label: fig-q3-all-forecasts
+#| fig-cap: "Updated turnover series (to Jun 2025) with 24-month-ahead forecasts from the three best models fitted on data up to Jun 2023. Dashed vertical line marks the start of the new data period."
+
+fc_all |> 
+  autoplot(print_retail_act |> filter_index("2021 Jan" ~ .), 
+           level = NULL, linewidth = 0.8) +
+  geom_vline(xintercept = as.Date("2023-07-01"), linetype = "dashed", colour = "black", linewidth = 0.8) +
+  labs(
+    title = "Forecasts from selected models compared with updated data",
+    y = "Turnover (Millions of Dollars)",
+    x = "Month",
+    colour = "Model"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+```
+
+**Visual Inspection and Commentary:**
+
+During the new data period (July 2023–June 2025), all models successfully capture the recurring seasonality. Overall, STL Decomposition tracks actual turnover most closely. While ARIMA performed well initially, it failed to adapt to the post-2024 turning point, severely under-forecasting the sharp January 2025 peak. ETS(M,N,M) slightly over-predicted early peaks but remained more responsive than ARIMA after 2024. Conversely, Regression (TSLM) systematically over-forecasts, lying at a completely different level. The subsequent under-forecasting by the non-regression models highlights a lasting post-COVID structural break unanticipated by models fitted only up to June 2023.
+
 
 \newpage
 ## Question 4
