@@ -221,6 +221,26 @@ bind_cols(seasonal_diff_tbl, first_diff_tbl) |>
 
 @tbl-q2-difference-tests also supports this choice, suggesting one seasonal difference and one ordinary difference.
 
+```{r}
+#| label: tbl-q2-kpss
+#| tbl-cap: "KPSS tests for the transformed series after differencing."
+
+kpss_seasonal <- print_retail_act |>
+  features(difference(box_cox(y, lambda), 12), unitroot_kpss) |>
+  mutate(series = "After seasonal difference only")
+
+kpss_final <- print_retail_act |>
+  features(difference(box_cox(y, lambda), 12) |> difference(), unitroot_kpss) |>
+  mutate(series = "After seasonal and first difference")
+
+bind_rows(kpss_seasonal, kpss_final) |>
+  select(series, kpss_stat, kpss_pvalue) |>
+  mutate(across(where(is.numeric), ~ round(.x, 3))) |>
+  kable()
+```
+
+@tbl-q2-kpss provides an additional stationarity check. Since the KPSS null hypothesis is stationarity, the seasonally differenced series is still not stationary at the 5% level ($p = 0.019$). After both seasonal and first differencing, I fail to reject stationarity ($p = 0.100$), supporting $D = 1$, $d = 1$, and $m = 12$.
+
 ### ARIMA model selection and diagnostics
 
 ```{r}
