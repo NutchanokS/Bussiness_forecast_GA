@@ -104,7 +104,9 @@ print_retail_act |>
     theme_minimal()
 ```
 
-@fig-season-plot shows that turnover generally declined over time while retaining a consistent seasonal pattern, with higher values toward the end of the year, especially in December. During the COVID-disruption period, the 2021 line falls sharply from July to October and reaches the lowest point in September, suggesting a strong temporary weakening. After the COVID-disruption period, turnover increases slightly in some months, but remains relatively low compared with 2018–2020.
+@fig-season-plot shows that turnover generally declined over time while retaining a consistent seasonal pattern, with higher values toward the end of the year, especially in December. During the COVID-disruption period, the 2021 line falls sharply from July to September and reaches the lowest point, suggesting a strong temporary weakening. After the COVID-disruption period, turnover increases slightly in some months, but remains relatively low compared with 2018–2020.
+
+Overall, COVID-19 appears to have contributed to additional volatility and a temporary weakening around 2021, although the series was already following a long-term downward trend before the disruption period.
 
 \newpage
 ## Question 2
