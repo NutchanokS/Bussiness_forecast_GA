@@ -451,9 +451,12 @@ ETS, STL, and ARIMA were retained from earlier best models. SNAIVE and TSLM serv
 train_data <- print_retail_act |> 
   filter(Month <= yearmonth("2023 Jun"))
 
-# Refit the three "best" models identified in GA2/GA3/GA4 on the *training* data
-lambda_train <- 0.403   
+# Define the transformation
+lambda_train <- train_data |>
+  features(y, guerrero) |>
+  pull(lambda_guerrero)
 
+# Refit the models
 fit_all <- train_data |> 
   model(
     `Benchmark (SNAIVE)` = SNAIVE(y),
@@ -474,7 +477,7 @@ fc_all <- fit_all |>
 fc_all |> 
   autoplot(print_retail_act |> filter_index("2021 Jan" ~ .), 
            level = NULL, linewidth = 0.8) +
-  geom_vline(xintercept = as.Date("2023-07-01"), linetype = "dashed", colour = "black", linewidth = 0.8) +
+  geom_vline(xintercept = yearmonth("2023-07-01"), linetype = "dashed", colour = "black", linewidth = 0.8) +
   labs(
     title = "Forecasts from selected models compared with updated data",
     y = "Turnover (Millions of Dollars)",
