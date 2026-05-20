@@ -443,11 +443,7 @@ The prediction intervals widen as the forecast horizon increases, reflecting gre
 
 *On the same graph, plot the updated data together with forecasts from all the 'best' alternative methods/models you have studied throughout the semester. Generate as many steps ahead forecasts required to cover the new data. Think about visualisation. Visually inspect these and comment on any similarities, differences, anomalies you may observe. (No more than 100 words). (12 marks)*
 
-To fairly compare the three best models identified in GA2–GA4, we refit each on training data up to June 2023 and generate 24-month-ahead forecasts to cover the newly added period (July 2023 – June 2025).
-
-- `STL_NAIVE` selected fromm GA2
-- `ETS(M,N,M)` selected from GA3
-- `ARIMA (3,1,1)(1,1,1)$_{12}$` selected from Q2
+ETS, STL, and ARIMA were retained from earlier best models. SNAIVE and TSLM serve as baselines representing seasonal persistence and deterministic trends. All were fitted to June 2023 data.
 
 ```{r}
 
@@ -491,7 +487,7 @@ fc_all |>
 
 **Visual Inspection and Commentary:**
 
-During the new data period (July 2023–June 2025), all models successfully capture the recurring seasonality. Overall, STL Decomposition tracks actual turnover most closely. While ARIMA performed well initially, it failed to adapt to the post-2024 turning point, severely under-forecasting the sharp January 2025 peak. ETS(M,N,M) slightly over-predicted early peaks but remained more responsive than ARIMA after 2024. Conversely, Regression (TSLM) systematically over-forecasts, lying at a completely different level. The subsequent under-forecasting by the non-regression models highlights a lasting post-COVID structural break unanticipated by models fitted only up to June 2023.
+All models capture recurring seasonality but diverge later. `STL` tracks turnover most closely. `ARIMA (3,1,1)(1,1,1)$_{12}$` performed well initially, missed the post-2024 turning point, under-forecasting the sharp January 2025 peak. `ETS(M,N,M)` slightly over-predicted early peaks but remained more responsive than ARIMA after 2024. Conversely, `Regression (TSLM)` systematically over-forecasts at a different level. The subsequent under-forecasting by the non-regression models highlights a lasting post-COVID structural break unanticipated by models fitted only up to June 2023.
 
 
 \newpage
