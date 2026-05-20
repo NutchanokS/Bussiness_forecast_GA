@@ -443,10 +443,9 @@ The prediction intervals widen as the forecast horizon increases, reflecting gre
 
 *On the same graph, plot the updated data together with forecasts from all the 'best' alternative methods/models you have studied throughout the semester. Generate as many steps ahead forecasts required to cover the new data. Think about visualisation. Visually inspect these and comment on any similarities, differences, anomalies you may observe. (No more than 100 words). (12 marks)*
 
-ETS, STL, and ARIMA were retained from earlier best models. SNAIVE and TSLM serve as baselines representing seasonal persistence and deterministic trends. All were fitted to June 2023 data.
+ETS, STL, and ARIMA were retained from earlier best models. SNAIVE and TSLM serve as baselines representing seasonal persistence and deterministic trends. All models were fitted only to data up to June 2023.
 
 ```{r}
-
 # Training set = data available at the time of GA2/GA3 (up to 2023 Jun)
 train_data <- print_retail_act |> 
   filter(Month <= yearmonth("2023 Jun"))
@@ -460,38 +459,38 @@ lambda_train <- train_data |>
 fit_all <- train_data |> 
   model(
     `Benchmark (SNAIVE)` = SNAIVE(y),
-    `Regression (TSLM)`  = TSLM(box_cox(y, lambda_train) ~ trend() + season()),
-    `STL Decomposition`  = decomposition_model(STL(box_cox(y, lambda_train)), NAIVE(season_adjust)),
-    `Best ETS (M,N,M)`   = ETS(y ~ error("M") + trend("N") + season("M")),
-    `Best ARIMA`         = ARIMA(box_cox(y, lambda_train) ~ pdq(3,1,1) + PDQ(1,1,1))
-  )
+    `Regression (TSLM)` = TSLM(box_cox(y, lambda_train) ~ trend() + season()),
+    `STL Decomposition` = decomposition_model(
+      STL(box_cox(y, lambda_train) ~ season(window = "periodic")),
+      NAIVE(season_adjust)),
+    `Best ETS (M,N,M)` = ETS(y ~ error("M") + trend("N") + season("M")),
+    `Best ARIMA` = ARIMA(box_cox(y, lambda_train) ~ pdq(3,1,1) + PDQ(1,1,1)))
 
 fc_all <- fit_all |> 
   forecast(h = "24 months")
 ```
 
 ```{r}
-#| label: fig-q3-all-forecasts
-#| fig-cap: "Updated turnover series (to Jun 2025) with 24-month-ahead forecasts from the three best models fitted on data up to Jun 2023. Dashed vertical line marks the start of the new data period."
+#| label: fig-q3-all-forecasts-zoom
+#| fig-cap: "Updated turnover series to June 2025 with 24-month-ahead forecasts from selected models fitted on data up to June 2023. The dashed vertical line marks the start of the updated data period."
 
 fc_all |> 
   autoplot(print_retail_act |> filter_index("2021 Jan" ~ .), 
            level = NULL, linewidth = 0.8) +
-  geom_vline(xintercept = yearmonth("2023-07-01"), linetype = "dashed", colour = "black", linewidth = 0.8) +
-  labs(
-    title = "Forecasts from selected models compared with updated data",
-    y = "Turnover (Millions of Dollars)",
-    x = "Month",
-    colour = "Model"
-  ) +
+  geom_vline(xintercept = yearmonth("2023 Jul"),
+             linetype = "dashed",
+             colour = "black",
+             linewidth = 0.8) +
+  labs(title = "Forecast comparison using models fitted to June 2023",
+       subtitle = "Dashed line marks the start of the updated data period",
+       y = "Turnover (Millions of Dollars)", x = "Month", colour = "Model") +
   theme_minimal() +
   theme(legend.position = "bottom")
 ```
 
 **Visual Inspection and Commentary:**
 
-All models capture recurring seasonality but diverge later. `STL` tracks turnover most closely. `ARIMA (3,1,1)(1,1,1)$_{12}$` performed well initially, missed the post-2024 turning point, under-forecasting the sharp January 2025 peak. `ETS(M,N,M)` slightly over-predicted early peaks but remained more responsive than ARIMA after 2024. Conversely, `Regression (TSLM)` systematically over-forecasts at a different level. The subsequent under-forecasting by the non-regression models highlights a lasting post-COVID structural break unanticipated by models fitted only up to June 2023.
-
+@fig-q3-all-forecasts-zoom shows that the main similarity is that all models retain some seasonal movement. However, they differ in level and peak size. TSLM clearly over-forecasts the updated period, while STL gives the closest overall forecasts because it stays near the observed data for most months. ETS and SNAIVE capture the timing of the December seasonal peaks relatively well, but still under-forecast the peak values. ARIMA performs reasonably in 2023 but under-forecasts more clearly by late 2024. The sharp December 2024 peak is the main anomaly, as none of the models forecast it well.
 
 \newpage
 ## Question 4
