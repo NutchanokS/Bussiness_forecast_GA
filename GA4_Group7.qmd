@@ -457,7 +457,7 @@ lambda_train <- 0.403
 fit_all <- train_data |> 
   model(
     `Benchmark (SNAIVE)` = SNAIVE(y),
-    `Regression (TSLM)`  = TSLM(y ~ trend() + season()),
+    `Regression (TSLM)`  = TSLM(box_cox(y, lambda_train) ~ trend() + season()),
     `STL Decomposition`  = decomposition_model(STL(box_cox(y, lambda_train)), NAIVE(season_adjust)),
     `Best ETS (M,N,M)`   = ETS(y ~ error("M") + trend("N") + season("M")),
     `Best ARIMA`         = ARIMA(box_cox(y, lambda_train) ~ pdq(3,1,1) + PDQ(1,1,1))
