@@ -490,7 +490,7 @@ fc_all |>
 
 **Visual Inspection and Commentary:**
 
-@fig-q3-all-forecasts-zoom shows that the main similarity is that all models retain some seasonal movement. However, they differ in level and peak size. TSLM clearly over-forecasts the updated period, while STL gives the closest overall forecasts because it stays near the observed data for most months. ETS and SNAIVE capture the timing of the December seasonal peaks relatively well, but still under-forecast the peak values. ARIMA performs reasonably in 2023 but under-forecasts more clearly by late 2024. The sharp December 2024 peak is the main anomaly, as none of the models forecast it well.
+@fig-q3-all-forecasts-zoom shows that the main similarity is that all models retain seasonal movement but differ in levels and peak sizes. TSLM systematically over-forecasts, while STL tracks non-peak months most closely. ETS and SNAIVE capture December peaks timing well but still under-forecast magnitudes. ARIMA performs reasonably initially but increasingly under-forecasts toward late 2024. The sharp December 2024 peak is the main anomaly, accurately predicted by no models.
 
 \newpage
 ## Question 4
