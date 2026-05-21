@@ -565,8 +565,6 @@ Using the two best models selected in Q4, STL decomposition and ETS(M,N,M) were 
 
 *Cheers, George and team.*
 
-## Question 6
-
 As GenieUs group, our forecasting work showed that the best model depends on the structure of the time series rather than on model complexity alone. A suitable forecasting method should match the main features of the historical data, including level, trend, seasonality, volatility and unusual shocks. For our retail series, the accuracy results in @tbl-q4-accuracy showed that STL decomposition and ETS(M,N,M) performed best. These models captured the recent level and recurring seasonal pattern more effectively than the benchmark, ARIMA and regression models.
 
 Benchmark methods, such as seasonal naïve, were useful because they provided a simple reference point. They are easy to understand and implement, and they help check whether more advanced models actually improve forecast accuracy. However, benchmarks are limited because they mainly repeat past patterns and cannot adapt well to structural changes.
