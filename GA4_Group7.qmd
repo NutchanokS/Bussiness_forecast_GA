@@ -498,8 +498,20 @@ fc_all |>
 *Summarise the accuracy of the competing forecasts over the new/updated data and choose the best two models/methods from this evaluation. (6 marks)*
 
 ```{r}
+#| label: tbl-q4-accuracy
+#| tbl-cap: "Forecast accuracy over the updated data period, July 2023 to June 2025."
 
+accuracy_tbl <- fc_all |>
+  accuracy(print_retail_act) |>
+  filter(.type == "Test") |>
+  arrange(RMSE)
+
+accuracy_tbl |>
+  mutate(across(where(is.numeric), ~ round(.x, 3))) |>
+  kable()
 ```
+
+The forecasts produced from the models fitted in Q3 are evaluated against the updated observations from July 2023 to June 2025. Based on the accuracy results in @tbl-q4-accuracy, the STL decomposition model is the best-performing model, with the lowest RMSE, MAE, MAPE, MASE and RMSSE. ETS(M,N,M) is the second-best model across the same measures. SNAIVE and ARIMA have larger forecast errors, while TSLM performs worst, suggesting that a simple trend and seasonal regression was not flexible enough for the updated period. Therefore, STL decomposition and ETS(M,N,M) are selected for the final forecasts.
 
 \newpage
 ## Question 5
