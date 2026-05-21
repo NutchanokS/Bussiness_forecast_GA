@@ -565,6 +565,18 @@ Using the two best models selected in Q4, STL decomposition and ETS(M,N,M) were 
 
 *Cheers, George and team.*
 
-```{r}
+## Question 6
 
-```
+As GenieUs group, our forecasting work showed that the best model depends on the structure of the time series rather than on model complexity alone. A suitable forecasting method should match the main features of the historical data, including level, trend, seasonality, volatility and unusual shocks. For our retail series, the accuracy results in @tbl-q4-accuracy showed that STL decomposition and ETS(M,N,M) performed best. These models captured the recent level and recurring seasonal pattern more effectively than the benchmark, ARIMA and regression models.
+
+Benchmark methods, such as seasonal naïve, were useful because they provided a simple reference point. They are easy to understand and implement, and they help check whether more advanced models actually improve forecast accuracy. However, benchmarks are limited because they mainly repeat past patterns and cannot adapt well to structural changes.
+
+Decomposition was one of the easiest frameworks to interpret. STL was helpful because it separated the series into trend, seasonal and remainder components, making it easier to explain the pattern of the data to a client. In our case, STL worked well because the series had strong seasonality and a changing recent level. Its limitation is that the forecasts can show wider uncertainty when the historical series is volatile.
+
+ETS was also intuitive because it models the level, trend and seasonality directly. ETS(M,N,M) performed strongly for our series because the recent data showed strong multiplicative seasonality but no clear long-term trend. ETS is useful for automatic forecasting and generally produces smooth forecasts, but selecting between additive and multiplicative components still requires careful visual judgement.
+
+ARIMA was the most challenging framework because it requires understanding stationarity, differencing, ACF/PACF patterns and residual diagnostics. Its strength is flexibility, as it can capture many autocorrelation patterns. However, ARIMA is less visually intuitive than decomposition or ETS, and for our series it did not forecast as accurately as the best two models.
+
+Regression models were useful because they allow external information to be included. A simple TSLM model was less suitable for our retail series because fixed trend and seasonal terms could not fully adapt to the structural change and volatility after COVID-19. However, a regression-based model may be more suitable for retail data affected by COVID-19 if relevant predictors are included. I would approach this using dynamic regression with ARIMA errors, adding intervention variables such as lockdown periods, reopening periods, online-shopping effects, inflation or consumer spending indicators. The regression part would capture COVID-related impacts, while ARIMA errors would handle remaining autocorrelation.
+
+Overall, we learnt that forecasting is not about choosing the most complex model. The best model is the one whose assumptions fit the data and performs well through visual checks, residual diagnostics and out-of-sample accuracy.
