@@ -519,8 +519,40 @@ The forecasts produced from the models fitted in Q3 are evaluated against the up
 *Use the best two models and generate forecasts for your series based on the end of your updated sample. Plot these (think about visualisation). Comment on these. (No more than 100 words). (6 marks)*
 
 ```{r}
+#| label: fig-q5-best-two-forecast
+#| fig-cap: "Forecasts from the two best-performing models fitted to the full updated sample."
 
+fit_best_two <- print_retail_act |>
+  model(
+    `STL Decomposition` = decomposition_model(
+      STL(box_cox(y, lambda) ~ season(window = "periodic")),
+      NAIVE(season_adjust)
+    ),
+    `ETS(M,N,M)` = ETS(y ~ error("M") + trend("N") + season("M"))
+  )
+
+fc_best_two <- fit_best_two |>
+  forecast(h = "24 months")
+
+fc_best_two |>
+  autoplot(
+    print_retail_act |> filter(Month >= yearmonth("2018 Jan")),
+    level = c(80, 95),
+    alpha = 0.5
+  ) +
+  labs(
+    title = "Forecasts from the two best-performing models",
+    subtitle = "STL decomposition and ETS(M,N,M), refitted using the full updated sample",
+    x = "Month",
+    y = "Turnover",
+    colour = "Model",
+    fill = "Model"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "bottom")
 ```
+
+Using the two best models selected in Q4, STL decomposition and ETS(M,N,M) were refitted to the full updated sample before producing 24-month forecasts. In @fig-q5-best-two-forecast, both models forecast turnover around the more recent level, rather than returning to the higher 2018–2019 peaks. Both retain strong end-of-year seasonal peaks. STL gives sharper seasonal movements and wider intervals, while ETS(M,N,M) produces a smoother path with narrower uncertainty. The wider STL intervals suggest greater forecast uncertainty, likely reflecting recent volatility, so future seasonal peaks should be interpreted cautiously.
 
 \newpage
 ## Question 6
