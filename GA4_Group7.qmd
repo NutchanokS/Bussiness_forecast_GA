@@ -443,8 +443,6 @@ The prediction intervals widen as the forecast horizon increases, reflecting gre
 
 *On the same graph, plot the updated data together with forecasts from all the 'best' alternative methods/models you have studied throughout the semester. Generate as many steps ahead forecasts required to cover the new data. Think about visualisation. Visually inspect these and comment on any similarities, differences, anomalies you may observe. (No more than 100 words). (12 marks)*
 
-ETS, STL, and ARIMA were retained from earlier best models. SNAIVE and TSLM serve as baselines representing seasonal persistence and deterministic trends. All models were fitted only to data up to June 2023.
-
 ```{r}
 # Training set = data available at the time of GA2/GA3 (up to 2023 Jun)
 train_data <- print_retail_act |> 
@@ -488,9 +486,7 @@ fc_all |>
   theme(legend.position = "bottom")
 ```
 
-**Visual Inspection and Commentary:**
-
-@fig-q3-all-forecasts-zoom shows that the main similarity is that all models retain seasonal movement but differ in levels and peak sizes. TSLM systematically over-forecasts, while STL tracks non-peak months most closely. ETS and SNAIVE capture December peaks timing well but still under-forecast magnitudes. ARIMA performs reasonably initially but increasingly under-forecasts toward late 2024. The sharp December 2024 peak is the main anomaly, accurately predicted by no models.
+SNAIVE, TSLM, STL, ETS and ARIMA were fitted only to data up to June 2023 before forecasting the updated period. @fig-q3-all-forecasts-zoom shows that all models retain seasonal movement but differ in levels and peak sizes. TSLM systematically over-forecasts, while STL tracks non-peak months most closely. ETS and SNAIVE capture the December peak timing well but still under-forecast magnitudes. ARIMA performs reasonably initially but under-forecasts more clearly by late 2024. The sharp December 2024 peak is the main anomaly, as none of the models forecast it well.
 
 \newpage
 ## Question 4
@@ -544,7 +540,7 @@ fc_best_two |>
     title = "Forecasts from the two best-performing models",
     subtitle = "STL decomposition and ETS(M,N,M), refitted using the full updated sample",
     x = "Month",
-    y = "Turnover",
+    y = "Turnover (Millions of Dollars)",
     colour = "Model",
     fill = "Model"
   ) +
