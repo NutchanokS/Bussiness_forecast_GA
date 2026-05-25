@@ -548,7 +548,7 @@ fc_best_two |>
   theme(legend.position = "bottom")
 ```
 
-Using the two best models selected in Q4, STL decomposition and ETS(M,N,M) were refitted to the full updated sample before producing 24-month forecasts. In @fig-q5-best-two-forecast, both models forecast turnover around the more recent post-COVID level, rather than returning to the higher 2018–2019 peaks. Both retain strong end-of-year seasonal peaks. STL gives sharper seasonal movements and wider intervals, while ETS(M,N,M) produces a smoother path with narrower uncertainty. The wider STL intervals suggest greater forecast uncertainty, likely reflecting recent volatility, so future seasonal peaks should be interpreted cautiously.
+Using the two best models selected in Q4, STL decomposition and ETS(M,N,M) were refitted to the full updated sample before producing 24-month forecasts. In @fig-q5-best-two-forecast, both models forecast turnover around the recent post-COVID level and retain strong end-of-year seasonal peaks. STL shows stronger seasonal fluctuations and wider prediction intervals, suggesting greater uncertainty from recent volatility. ETS(M,N,M) has narrower intervals and a smoother overall path, while still producing clear end-of-year peaks. Therefore, future seasonal peaks should be interpreted cautiously.
 
 \newpage
 ## Question 6
